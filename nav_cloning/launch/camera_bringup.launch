@@ -1,0 +1,40 @@
+<launch>
+    <node pkg="usb_cam" name="camera_center" type="usb_cam_node" output="screen">
+      <param name="video_device" type="string" value="/dev/video4"/>
+      <param name="width" type="int" value="640"/>
+      <param name="height" type="int" value="480"/>
+      <param name="framerate" value="30"/>
+      <param name="pixel_format" value="mjpeg"/>
+      <param name="camera_frame_id" value="usb_cam"/>
+      <param name="io_method" value="mmap"/>
+      <param name="frame_id" value="camera_center"/>
+      <param name="full_ffmpeg_logi" value="false"/>
+      <param name="camera_info_url" type="string" value="file:///home/orne_beta/camera_center.yaml"/>
+    </node>
+
+    <node pkg="usb_cam" name="camera_left" type="usb_cam_node" output="screen">
+      <param name="video_device" type="string" value="/dev/video8"/>
+      <param name="width" type="int" value="640"/>
+      <param name="height" type="int" value="480"/>
+      <param name="framerate" value="30"/>
+      <param name="pixel_format" value="mjpeg"/>
+      <param name="camera_frame_id" value="usb_cam"/>
+      <param name="io_method" value="mmap"/>
+      <param name="frame_id" value="camera_left"/>
+      <param name="full_ffmpeg_logi" value="false"/>
+      <param name="camera_info_url" type="string" value="file:///home/orne_beta/camera_left.yaml"/>
+    </node>
+
+    <node pkg="usb_cam" name="camera_right" type="usb_cam_node" output="screen">
+      <param name="video_device" type="string" value="/dev/video6"/>
+      <param name="width" type="int" value="640"/>
+      <param name="height" type="int" value="480"/>
+      <param name="framerate" value="30"/>
+      <param name="pixel_format" value="mjpeg"/>
+      <param name="camera_frame_id" value="usb_cam"/>
+      <param name="io_method" value="mmap"/>
+      <param name="frame_id" value="camera_right"/>
+      <param name="full_ffmpeg_logi" value="false"/>
+      <param name="camera_info_url" type="string" value="file:///home/orne_beta/camera_right.yaml"/>
+    </node>
+</launch>
