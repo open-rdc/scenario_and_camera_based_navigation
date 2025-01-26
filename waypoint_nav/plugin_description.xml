@@ -1,0 +1,16 @@
+<library path="lib/libwaypoint_nav">
+    <class name="waypoint_nav/SaveTriggerPanel"
+        type="waypoint_nav::SaveTriggerPanel"
+        base_class_type="rviz::Panel">
+        <description>
+            TODO
+        </description>
+    </class>
+    <class name="waypoint_nav/StateTriggerPanel"
+        type="waypoint_nav::StateTriggerPanel"
+        base_class_type="rviz::Panel">
+        <description>
+            TODO
+        </description>
+    </class>
+</library>

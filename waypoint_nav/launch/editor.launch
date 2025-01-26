@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- <arg name="map_file" default="$(find waypoint_nav)/maps/mymap"/> -->
+    <!-- <arg name="map_file" default="$(find waypoint_nav)/src/nav_cloning/maps/cit_3f_map"/> -->
+    <arg name="map_file" default="$(find nav_cloning)/maps/real_tsudanuma2-3_v2"/>
+    <!-- <arg name="map_file" default="$(find waypoint_nav)/src/nav_cloning/maps/willowgarage"/> -->
+    <!-- <arg name="filename" default="$(find waypoint_nav)/src/nav_cloning/waypoint/willow_loop.yaml"/>  -->
+    <arg name="filename" default="$(find nav_cloning)/waypoint/cit3f/route_g.yaml"/>
+    <!-- <arg name="filename" default="/home/rdclab/orne_ws/src/intersection_detector/data/waypoint/.yaml"/>  -->
+    <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_file).yaml"/>
+
+    <node pkg="waypoint_nav" type="waypoint_editor" name="waypoint_editor" output="screen">
+        <param name="filename" value="$(arg filename)"/>
+        <param name="map_frame" value="map"/>
+        <rosparam file="$(find waypoint_nav)/config/function_list_detailed.yaml" command="load"/>
+    </node>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find waypoint_nav)/rviz/editor.rviz" />
+</launch>

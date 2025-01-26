@@ -1,0 +1,18 @@
+function_list: [run,suspend,
+run_stop_dead_end,
+
+run_right_corner_right,
+run_left_corner_left,
+
+run_go_cross_road,
+run_left_cross_road,
+run_right_cross_road,
+
+run_go_3_way_right,
+run_right_3_way_right,
+
+run_left_3_way_center,
+run_right_3_way_center,
+
+run_go_3_way_left,
+run_left_3_way_left]
