@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="intersection_detector" type="intersection_detect_node_lrcn_off_detailed_test.py" name="intersection_node" output="screen"/>
+</launch>
