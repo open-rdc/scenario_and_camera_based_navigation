@@ -27,7 +27,7 @@ from tqdm.auto import tqdm
 # HYPER PARAM
 BATCH_SIZE = 8
 BRANCH = 3
-EPOCH = 10
+EPOCH = 5
 PADDING_DATA = 7
 
 class Net(nn.Module):
@@ -87,25 +87,30 @@ class Net(nn.Module):
         img_out = self.cnn_layer(x) 
         fc_out = self.fc_layer(img_out)  
         batch_size = x.size(0)
-        # print(batch_size)
-        output_str = torch.zeros(batch_size, 1, device=fc_out.device)
-        output_left = torch.zeros(batch_size, 1, device=fc_out.device)
-        output_right = torch.zeros(batch_size, 1, device=fc_out.device)
 
-        for i in range(batch_size):
-            if c[i].argmax().item() == 0:
-                fc_str = fc_out[i].unsqueeze(0)
-                output_str[i] = self.branch[0](fc_str)
-            elif c[i].argmax().item() == 1:
-                fc_left = fc_out[i].unsqueeze(0)
-                output_left[i] = self.branch[1](fc_left)
-            elif c[i].argmax().item() == 2:
-                fc_right = fc_out[i].unsqueeze(0)
-                output_right[i] = self.branch[2](fc_right)
-
-        output = torch.stack([output_str, output_left, output_right])
-        # print(output)    
-        return output
+        # print(batch_size)   
+        out_features = self.branch[0][-1].out_features  # 例: 1
+    
+        output_str = torch.zeros(batch_size, out_features, device=fc_out.device)
+        output_left = torch.zeros(batch_size, out_features, device=fc_out.device)
+        output_right = torch.zeros(batch_size, out_features, device=fc_out.device)
+    
+        branch_indices = torch.argmax(c, dim=1)  # (B,)
+    
+        mask0 = (branch_indices == 0)
+        mask1 = (branch_indices == 1)
+        mask2 = (branch_indices == 2)
+    
+        if mask0.any():
+            output_str[mask0] = self.branch[0](fc_out[mask0])
+        if mask1.any():
+            output_left[mask1] = self.branch[1](fc_out[mask1])
+        if mask2.any():
+            output_right[mask2] = self.branch[2](fc_out[mask2])
+    
+        output = torch.stack([output_str, output_left, output_right], dim=0)
+        # print(output)
+        return output 
 
 class deep_learning:
     def __init__(self, n_channel=3, n_action=1):
@@ -129,11 +134,9 @@ class deep_learning:
         self.max_freq = 0
         self.results_train = {}
         self.results_train['loss'], self.results_train['accuracy'] = [], []
-        self.loss_list = []
-        self.acc_list = []
-        self.dir_list = []
-        self.datas = []
-        self.target_angles = []
+        self.x_test = []
+        self.c_test = []
+        self.t_test = []
         self.criterion = nn.MSELoss()
         self.transform = transforms.Compose([transforms.ToTensor()])
         self.first_flag = True
@@ -157,7 +160,7 @@ class deep_learning:
         dataset = TensorDataset(self.x_cat, self.c_cat, self.t_cat)
         return self.x_cat, self.c_cat, self.t_cat
         
-    def make_dataset(self,img, dir_cmd, target_angle):        
+    def make_dataset(self, img, dir_cmd, target_angle):        
         if self.first_flag:
             self.x_cat = torch.tensor(
                 img, dtype=torch.float32, device=self.device).unsqueeze(0)
@@ -219,6 +222,15 @@ class deep_learning:
 
         print("dataset_num:", len(dataset))
         return dataset, len(dataset), train_dataset
+    
+    def make_test_dataset(self, img, dir_cmd, target_angle):
+        x_test = torch.tensor(img, dtype=torch.float32).permute(2, 0, 1)   # (C, H, W)
+        c_test = torch.tensor(dir_cmd, dtype=torch.float32)
+        t_test = torch.tensor([target_angle], dtype=torch.float32)
+
+        self.x_test.append(x_test)
+        self.c_test.append(c_test)
+        self.t_test.append(t_test)
 
     def loss_branch(self, dir_cmd, target, output):
         #mask command branch [straight, left, straight]
@@ -282,6 +294,11 @@ class deep_learning:
         dataset = TensorDataset(self.x_cat, self.c_cat, self.t_cat)
         train_dataset = DataLoader(dataset, batch_size=BATCH_SIZE,
         shuffle=True)
+        # x_test = torch.stack(self.x_test)
+        # c_test = torch.stack(self.c_test)
+        # t_test = torch.stack(self.t_test)
+        # test_dataset = TensorDataset(x_test, c_test, t_test)
+        # test_dataset = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         for epoch in range(EPOCH):
             self.net.train()
@@ -310,6 +327,23 @@ class deep_learning:
             average_loss = self.loss_all / count
             # self.writer.add_scalar("Average Loss per Epoch", average_loss, epoch)
             print(f"Epoch {epoch+1}, Average Loss: {average_loss:.4f}")
+
+            # self.net.eval()
+            # self.loss_test_all = 0.0
+            # count_test = 0
+            # for x_test, c_test, t_test in tqdm(test_dataset):
+            #     x_test = x_test.to(self.device, non_blocking=True)
+            #     c_test = c_test.to(self.device, non_blocking=True)
+            #     t_test = t_test.to(self.device, non_blocking=True)
+
+            #     y_test = self.net(x_test, c_test)
+            #     loss_test = self.loss_branch(c_test, t_test, y_test)
+            #     self.loss_test_all += loss_test.item()
+            #     count_test += 1
+
+            # average_loss_test = self.loss_test_all / count_test
+            # # self.writer.add_scalar("Average Test Loss per Epoch", average_loss_test, epoch)
+            # print(f"Epoch {epoch+1}, Test Loss: {average_loss_test:.4f}")
 
     def act_and_trains(self, img, dir_cmd, train_dataset):
         # <Training mode>

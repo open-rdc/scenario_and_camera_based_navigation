@@ -38,7 +38,7 @@
   </group>
 
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="5 nav_cloning nav_cloning.launch script:=$(arg script)"
+        args="10 nav_cloning nav_cloning.launch script:=$(arg script)"
         name="timed_roslaunch" output="screen" >
   </node>
 
@@ -48,14 +48,18 @@
         name="timed_roslaunch2" >
   </node> -->
 
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+  </node>
+
 <!-- orne_gamma   -->
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="8 nav_cloning gamma_navigation.launch model:=waffle map_file:=$(find nav_cloning)/../maps/$(arg map_file) waypoints_file:=$(find nav_cloning)/waypoint/cit3f/$(arg waypoints_file) dist_err:=$(arg dist_err) initial_pose_x:=$(arg initial_pose_x) initial_pose_y:=$(arg initial_pose_y) initial_pose_a:=$(arg initial_pose_a) use_waypoint_nav:=$(arg use_waypoint_nav)"
+        args="18 orne_navigation_executor play_waypoints_nav_common.launch robot_name:=gamma map_file:=$(find nav_cloning)/../maps/$(arg map_file) waypoints_file:=$(find nav_cloning)/../waypoints/$(arg waypoints_file) dist_err:=$(arg dist_err)"
         name="timed_roslaunch2" >
   </node>
 
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="20 nav_cloning start_wp_nav.launch"
+        args="30 nav_cloning start_wp_nav.launch"
         name="timed_roslaunch3" >
   </node>
 </launch>

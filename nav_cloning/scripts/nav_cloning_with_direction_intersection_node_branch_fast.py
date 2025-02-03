@@ -62,21 +62,14 @@ class nav_cloning_node:
         self.learning = True
         self.select_dl = False
         self.loop_count_flag = False
-        self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
-        self.place = 'cit3f'
-        self.path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/result_with_dir_'+str(self.mode)+'/'
-        self.save_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model_with_dir_'+str(self.mode)+'/cit3f/branch/'
-        self.save_image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.place) + '/' + str(self.start_time) + '/image/'
-        self.save_dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.place) + '/' + str(self.start_time) + '/dir/'
-        self.save_vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.place) + '/' + str(self.start_time) + '/vel/'
-        self.load_path =roslib.packages.get_pkg_dir('nav_cloning') + '/data/model_with_dir_'+str(self.mode)+'/cit3f/branch/on+off/11/model.pt'
-        self.load_image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.place) + '/' + 'old10000' + '/image' + '/image.pt'
-        self.load_dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.place) + '/' + 'old10000' + '/dir' + '/dir.pt'
-        self.load_vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.place) + '/' + 'old10000' + '/vel' + '/vel.pt'
-        # self.load_path= '/home/rdclab/catkin_ws/src/nav_cloning/data/model_with_dir_selected_training/pytorch/v2_test120000/model_gpu.pt'
-        #self.load_path= '/home/rdclab/catkin_ws/src/nav_cloning/data/model_with_dir_selected_training/pytorch/off_new/model_gpu.pt'
-        # self.load_path= '/home/rdclab/catkin_ws/src/nav_cloning/data/model_with_dir_selected_training/pytorch/off_branch/model_gpu.pt'
         
+        self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
+        self.path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/result_with_dir_'+str(self.mode)+'/'
+        self.save_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model_with_dir_'+str(self.mode)+'/'
+        self.save_image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.start_time) + '/image/'
+        self.save_dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.start_time) + '/dir/'
+        self.save_vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.start_time) + '/vel/'
+
         self.previous_reset_time = 0
         self.pos_x = 0.0
         self.pos_y = 0.0
@@ -196,13 +189,13 @@ class nav_cloning_node:
             # self.dl.load(self.load_path)            
             # print("load model",self.load_path)
         
-        if self.episode == self.episode_num:
-            self.vel.linear.x = 0.0
-            self.vel.angular.z = 0.0
-            self.nav_pub.publish(self.vel)
-            self.dl.off_trains() 
-            self.dl.save(self.save_path)
-            self.learning = False
+        # if self.episode == self.episode_num:
+        #     self.vel.linear.x = 0.0
+        #     self.vel.angular.z = 0.0
+        #     self.nav_pub.publish(self.vel)
+        #     self.dl.off_trains() 
+        #     self.dl.save(self.save_path)
+        #     self.learning = False
         #     x_cat, c_cat, t_cat = self.dl.call_dataset()
         #     self.dl.save_tensor(x_cat, self.save_image_path, '/image.pt')
         #     self.dl.save_tensor(c_cat, self.save_dir_path, '/dir.pt')
@@ -217,6 +210,12 @@ class nav_cloning_node:
             os.system('killall roslaunch')
             sys.exit()
 
+        # if self.episode % 5 == 0:
+        #     self.dl.make_test_dataset(img, self.cmd_dir_data, self.action)
+        #     print("make test dataset")
+        # else:
+        #     pass
+
         if self.learning:
             target_action = self.action
             distance = self.min_distance
@@ -225,6 +224,13 @@ class nav_cloning_node:
                 action = self.dl.act(img, self.cmd_dir_data)
                 angle_error = abs(action - target_action)
                 loss = 0
+                
+                # if self.episode % 3 == 0:
+                #     self.dl.make_test_dataset(img, self.cmd_dir_data, self.action)
+                #     print("make test dataset")
+                #     angle_error = 0.0
+                # else:
+                #     pass
 
                 if angle_error > 0.05:
                     dataset , dataset_num, train_dataset = self.dl.make_dataset(img,self.cmd_dir_data,target_action)
@@ -247,12 +253,13 @@ class nav_cloning_node:
                     self.vel.linear.x = 0.0
                     self.vel.angular.z = 0.0
                     self.nav_pub.publish(self.vel)
-                    self.learning = False
-                    self.dl.save(self.save_path)
                     x_cat, c_cat, t_cat = self.dl.call_dataset()
                     self.dl.save_tensor(x_cat, self.save_image_path, '/image.pt')
                     self.dl.save_tensor(c_cat, self.save_dir_path, '/dir.pt')
-                    self.dl.save_tensor(t_cat, self.save_vel_path, '/vel.pt')                  
+                    self.dl.save_tensor(t_cat, self.save_vel_path, '/vel.pt')
+                    self.dl.off_trains()
+                    self.dl.save(self.save_path)
+                    self.learning = False               
                 else:
                     pass
                         
@@ -260,7 +267,7 @@ class nav_cloning_node:
                     self.select_dl = False
                 elif distance <= 0.1:
                     self.select_dl = True
-                if self.select_dl and self.episode >= 0 and self.cmd_dir_data == (1, 0, 0):
+                if self.select_dl and self.episode >= 0:
                     target_action = action
 
             # end mode
