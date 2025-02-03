@@ -1,4 +1,4 @@
-image: cit_3f_map.pgm
+image: cit_3f_map_for_costmap.pgm
 resolution: 0.050000
 origin: [-100.000000, -100.000000, 0.000000]
 negate: 0
