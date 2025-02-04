@@ -9,7 +9,7 @@ import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 # from nav_cloning_with_direction_net_branch import *
-from nav_cloning_with_direction_net_branch_fast import *
+from network import *
 from skimage.transform import resize
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseArray
@@ -64,11 +64,11 @@ class nav_cloning_node:
         self.loop_count_flag = False
         
         self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
-        self.path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/result_with_dir_'+str(self.mode)+'/'
-        self.save_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model_with_dir_'+str(self.mode)+'/'
-        self.save_image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.start_time) + '/image/'
-        self.save_dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.start_time) + '/dir/'
-        self.save_vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(self.mode) + '/' + str(self.start_time) + '/vel/'
+        self.path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/result/'
+        self.save_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model/'
+        self.save_image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/image/'
+        self.save_dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/dir/'
+        self.save_vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/vel/'
 
         self.previous_reset_time = 0
         self.pos_x = 0.0
@@ -233,7 +233,7 @@ class nav_cloning_node:
                 #     pass
 
                 if angle_error > 0.05:
-                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img,self.cmd_dir_data,target_action)
+                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
                     action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
                     action = action * 1.5
                     action = max(min(action, 0.4), -0.4)

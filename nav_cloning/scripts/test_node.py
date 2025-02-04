@@ -8,7 +8,7 @@ import rospy
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-from nav_cloning_with_direction_net_branch_fast import *
+from network import *
 # from nav_cloning_with_direction_net_off import *
 from skimage.transform import resize
 from geometry_msgs.msg import Twist
@@ -46,7 +46,7 @@ class nav_cloning_node:
         self.vel = Twist()
         self.cv_image = np.zeros((480,640,3), np.uint8)
         self.learning = False
-        self.load_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model_with_dir_'+str(self.mode)+'/cit3f/branch/test/model.pt'
+        self.load_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model/1/model.pt'
 
         self.cmd_dir_data = (0, 0, 0)
 
