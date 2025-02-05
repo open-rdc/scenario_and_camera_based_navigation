@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="script" default="create_dataset_and_learning.py"/>
+    <node pkg="intersection_detector" type="$(arg script)" name="intersection_detector_node" output="screen"/>
+</launch>

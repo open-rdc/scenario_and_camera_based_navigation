@@ -32,8 +32,7 @@ from nav_msgs.msg import Odometry
 class intersection_detector_node:
     def __init__(self):
         rospy.init_node('intersection_detector_node', anonymous=True)
-        self.class_num = 8
-        self.dl = deep_learning(class_num = self.class_num)
+        self.dl = deep_learning()
         self.bridge = CvBridge()
         self.intersection_pub = rospy.Publisher("passage_type",cmd_dir_intersection,queue_size=1)
         self.image_sub = rospy.Subscriber("/camera_center/image_raw", Image, self.callback)
@@ -58,7 +57,7 @@ class intersection_detector_node:
         self.path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/result'
         self.save_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/lrcn/real/'
 
-        self.load_path =roslib.packages.get_pkg_dir('intersection_detector') + '/data/model/lrcn/sim/h/model_gpu.pt'
+        self.load_path =roslib.packages.get_pkg_dir('intersection_detector') + '/data/model/1/model_gpu.pt'
        
         self.previous_reset_time = 0
         self.pos_x = 0.0

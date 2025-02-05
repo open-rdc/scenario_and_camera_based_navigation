@@ -29,16 +29,15 @@ from nav_msgs.msg import Odometry
 class intersection_detector_node:
     def __init__(self):
         rospy.init_node('intersection_detector_node', anonymous=True)
-        self.class_num = 8
         self.dl = deep_learning()
         self.bridge = CvBridge()
         # self.intersection_pub = rospy.Publisher("passage_type",String,queue_size=1)
         self.intersection_pub = rospy.Publisher("passage_type",cmd_dir_intersection,queue_size=1)
         self.image_sub = rospy.Subscriber("/camera_center/image_raw", Image, self.callback)
 
-        self.srv = rospy.Service('/training_intersection', SetBool, self.callback_save_tensor)
+        self.srv = rospy.Service('/training_intersection', SetBool, self.callback_loop_count)
 
-        self.loop_srv = rospy.Service('/loop_count', SetBool, self.callback_save_tensor)
+        self.loop_srv = rospy.Service('/loop_count', SetBool, self.callback_loop_count)
         
         # self.mode_save_srv = rospy.Service('/model_save_intersection', Trigger, self.callback_model_save)
         self.cmd_dir_sub = rospy.Subscriber("/cmd_dir_intersection", cmd_dir_intersection, self.callback_cmd,queue_size=1)
@@ -53,14 +52,14 @@ class intersection_detector_node:
         self.cv_right_image = np.zeros((480,640,3), np.uint8)
         self.learning = True
 
-        self.save_tensor_flag = False
+        self.loop_count_flag = False
         self.cat_tensor_flag = False
         self.learning_tensor_flag = False
         self.select_dl = False
         self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
-        self.save_image_path = roslib.packages.get_pkg_dir('intersection_detector') + '/../data/intersection_detector/dataset/image/'
-        self.save_label_path = roslib.packages.get_pkg_dir('intersection_detector') + '/../data/intersection_detector/dataset/label/'
-        self.save_path = roslib.packages.get_pkg_dir('intersection_detector') + '/../data/intersection_detector/model/'
+        self.save_image_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/dataset/image/'
+        self.save_label_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/dataset/label/'
+        self.save_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/model/'
         
         self.previous_reset_time = 0
         self.pos_x = 0.0
@@ -84,10 +83,10 @@ class intersection_detector_node:
         self.cmd_dir_data = data.intersection_label
 
 
-    def callback_save_tensor(self, data):
+    def callback_loop_count(self, data):
         resp = SetBoolResponse()
         # self.learning = data.data
-        self.save_tensor_flag = data.data
+        self.loop_count_flag = data.data
         resp.message = "Training: " + str(self.learning)
         resp.success = True
         return resp
@@ -135,30 +134,16 @@ class intersection_detector_node:
         # with open(self.path + self.start_time + '/' + 'training.csv', 'a') as f:
         #     writer = csv.writer(f, lineterminator='\n')
         #     writer.writerow(line)
-        if self.save_tensor_flag:
-            # dataset ,dataset_num,train_dataset =self.dl.make_dataset(img,self.cmd_dir_data)
-            # self.dl.training(train_dataset)
-            image_tensor ,label_tensor=self.dl.make_dataset(img,self.cmd_dir_data)
-            self.dl.save_bagfile(image_tensor,self.save_image_path,'/image.pt')
-            self.dl.save_bagfile(label_tensor,self.save_label_path, '/label.pt')
-            self.save_tensor_flag = False
-            print(self.save_image_path)
-            print(self.save_label_path)
-            self.learning_tensor_flag = True
-        else :
-            pass
-
-        if self.learning_tensor_flag:
+        if self.loop_count_flag:
+            self.dl.save_tensor(image_tensor,self.save_image_path,'/image.pt')
+            self.dl.save_tensor(label_tensor,self.save_label_path, '/label.pt')
             _,_ = self.dl.cat_training(image_tensor, label_tensor, False)
-            # _,_ = self.dl.training(self.load_image_path,self.load_label_path)
-            # self.dl.save_bagfile(x_tensor,self.save_image_path,'/image.pt')
-            # self.dl.save_bagfile(t_tensor,self.save_label_path, '/label.pt')
             self.dl.save(self.save_path)
-            self.learning_tensor_flag = False
+            self.loop_count_flag = False
             print("Finish learning")
             os.system('killall roslaunch')
             sys.exit()
-        else:
+        else :
             pass
 
 if __name__ == '__main__':

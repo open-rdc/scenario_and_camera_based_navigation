@@ -27,7 +27,7 @@ from torcheval.metrics import BinaryAccuracy
 # HYPER PARAM
 BATCH_SIZE = 32
 FRAME_SIZE = 16
-EPOCH_NUM = 30
+EPOCH_NUM = 20
 CLIP_VALUE = 4.0
 
 class Net(nn.Module):
@@ -103,11 +103,11 @@ class deep_learning:
         # # balance_weights = torch.tensor([1.0, 1.0,5.0,5.0,1.0,5.0,10.0,5.0]).to(self.device)
         # self.criterion = nn.CrossEntropyLoss(weight=balance_weights)
         #maech area
-        # balance_weights = torch.tensor([1.0, 1.0,5.0,5.0,1.0,5.0,10.0,5.0]).to(self.device)
+        balance_weights = torch.tensor([1.0, 1.0, 10.0, 10.0, 1.0, 5.0, 7.5, 5.0]).to(self.device)
         #mech+add area
         # balance_weights = torch.tensor([1.0, 39.5, 12.8, 13.8, 0, 5.1, 8.5, 5.9]).to(self.device)
         # 3camere
-        balance_weights = torch.tensor([1.0, 39.5, 14.0, 14.2, 0, 6.6, 7.0, 6.4]).to(self.device)
+        # balance_weights = torch.tensor([1.0, 39.5, 14.0, 14.2, 0, 6.6, 7.0, 6.4]).to(self.device)
         self.criterion = nn.CrossEntropyLoss(weight=balance_weights)
         self.first_flag = True
         self.first_test_flag = True
@@ -364,8 +364,8 @@ class deep_learning:
                                                     [1] == torch.max(t_label_train, 1)[1]).item()
                 print("epoch:",epoch, "accuracy :", self.train_accuracy, "/",len(t_label_train),
                         (self.train_accuracy/len(t_label_train))*100, "%","loss :",loss_all.item())
-                self.writer.add_scalar("loss", loss_all.item(), self.count)
-                self.writer.add_scalar("accuracy",(self.train_accuracy/len(t_label_train))*100,self.count)
+                # self.writer.add_scalar("loss", loss_all.item(), self.count)
+                # self.writer.add_scalar("accuracy",(self.train_accuracy/len(t_label_train))*100,self.count)
                 loss_all.backward()
                 self.optimizer.step()
                 self.loss_all = loss_all.item()
@@ -382,8 +382,8 @@ class deep_learning:
             epoch_loss = batch_loss / len(train_dataset)
             epoch_accuracy = batch_accuracy /len(train_dataset)
             print("epoch loss:",epoch_loss,"epoch accuracy:",epoch_accuracy)
-            self.writer.add_scalar("epoch loss", epoch_loss, epoch)
-            self.writer.add_scalar("epoch accuracy",epoch_accuracy,epoch)
+            # self.writer.add_scalar("epoch loss", epoch_loss, epoch)
+            # self.writer.add_scalar("epoch accuracy",epoch_accuracy,epoch)
         print("Finish learning!!")
         finish_flag = True
 
@@ -439,60 +439,38 @@ class deep_learning:
 
         return self.train_accuracy, self.loss_all
 
-    def model_test(self, image_path,label_path):
+    def test(self, img):
         self.net.eval()
-        accuracy =0.0
-        test_accuracy = 0.0
     # <to tensor img(x)>
-        load_x_tensor = torch.load(image_path)
-        load_t_tensor = torch.load(label_path)
-        # print("x_tensor:",load_x_tensor,"t_tensor:",load_t_tensor)
-        print("test label info :",torch.sum(load_t_tensor ,dim=0))
-        dataset = TensorDataset(load_x_tensor, load_t_tensor)
-        # n_samples = len(dataset)
-        # test_size = int(n_samples *0.2)
-        # subset_1_indices = list(range(0,test_size))
-        # subset_2_indices = list(range(test_size,n_samples))
-        # dataset_1 = Subset(dataset,subset_1_indices)
-        # dataset_2 = Subset(dataset,subset_2_indices)
-        # # _,val_dataset = random_split(test_dataset,)
-        test_dataset = DataLoader(
-            dataset, batch_size=8, generator=torch.Generator('cpu'), shuffle=False)
-        # print(n_samples)
-        # print(load_x_tensor.shape)
-        # del load_x_tensor,load_t_tensor
-        # for x_test,t_label_test in test_dataset:
-                # if i == random_train:
-                # x_train,t_label_train = train_dataset
-                # x_train.to(self.device, non_blocking=True)
-                # t_label_train.to(self.device, non_blocking=True)
-            # x_test = x_test.to(self.device,non_blocking=True)
-            # t_label_test = t_label_test.to(self.device, non_blocking=True)
-        for x_test,t_label_test in test_dataset:
-                # if i == random_train:
-                # x_train,t_label_train = train_dataset
-                # x_train.to(self.device, non_blocking=True)
-                # t_label_train.to(self.device, non_blocking=True)
-                x_test = x_test.to(self.device,non_blocking=True)
-                t_label_test = t_label_test.to(self.device, non_blocking=True)
-                self.intersection_test = self.net(x_test)
-                accuracy += multiclass_accuracy(
-                    input=torch.max(self.intersection_test,1)[1],
-                    target=torch.max(t_label_test,1)[1],
-                    num_classes=8,
-                    average="micro"
-                ).item()
+        if self.first_test_flag:
+            self.x_cat_test = torch.tensor(
+                img, dtype=torch.float32, device=self.device).unsqueeze(0)
+            self.x_cat_test = self.x_cat_test.permute(0, 3, 1, 2)
+            self.first_test_flag = False
+        
+        x = torch.tensor(
+            img, dtype=torch.float32, device=self.device).unsqueeze(0)
+        x = x.permute(0, 3, 1, 2)
+        self.x_cat_test = torch.cat([self.x_cat_test, x], dim=0)
+        # print("x_test_cat:",self.x_cat_test.shape)
+        if self.x_cat_test.size()[0] == FRAME_SIZE:
+            # self.x_cat_time_test = self.x_cat_test.unsqueeze(0)
+            # torch.cat((self.x_cat_time, self.x_cat_test.unsqueeze(0)), dim=0)
+            #self.first_test_flag = True
+            self.intersection_test = self.net(self.x_cat_test.unsqueeze(0))
+            print("s:",self.intersection_test.shape)
+            self.x_cat_test = self.x_cat_test[1:]
+        # print(x_test_ten.shape,x_test_ten.device,c_test.shape,c_test.device)
+    # <test phase>
+            # self.intersection_test = self.net(self.x_cat_test.unsqueeze(0))
+        
+        return torch.max(self.intersection_test, 1)[1].item()
 
-        print("model_accuracy:",accuracy*100/len(test_dataset))
-
-        return accuracy
-
-    def save_bagfile(self, dataset_tensor,save_path,file_name):
-        # <model save>
+    def save_tensor(self, dataset_tensor, save_path, file_name):
         path = save_path + time.strftime("%Y%m%d_%H:%M:%S")
         os.makedirs(path)
         torch.save(dataset_tensor, path+file_name)
-        print("save_path_path!!: ",save_path + file_name)
+        print("save_path: ",save_path + file_name)
 
     def save(self, save_path):
         # <model save>
