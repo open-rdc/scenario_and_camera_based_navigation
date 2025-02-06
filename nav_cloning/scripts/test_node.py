@@ -46,7 +46,7 @@ class nav_cloning_node:
         self.vel = Twist()
         self.cv_image = np.zeros((480,640,3), np.uint8)
         self.learning = False
-        self.load_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model/1/model.pt'
+        self.load_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/model/demo/model.pt'
 
         self.cmd_dir_data = (0, 0, 0)
 

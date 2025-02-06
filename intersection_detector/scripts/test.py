@@ -57,7 +57,7 @@ class intersection_detector_node:
         self.path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/result'
         self.save_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/lrcn/real/'
 
-        self.load_path =roslib.packages.get_pkg_dir('intersection_detector') + '/data/model/1/model_gpu.pt'
+        self.load_path =roslib.packages.get_pkg_dir('intersection_detector') + '/data/model/demo/model.pt'
        
         self.previous_reset_time = 0
         self.pos_x = 0.0
