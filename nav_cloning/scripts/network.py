@@ -51,9 +51,6 @@ class Net(nn.Module):
         torch.nn.init.kaiming_normal_(self.fc5.weight)
         torch.nn.init.kaiming_normal_(self.fc6.weight)
         torch.nn.init.kaiming_normal_(self.fc7.weight)
-        #self.fc7.weight = nn.Parameter(torch.zeros(n_channel,260))
-        #self.maxpool = nn.MaxPool2d(2,2)
-        #self.batch = nn.BatchNorm2d(0.2)
         self.flatten = nn.Flatten()
     # CNN layer
         self.cnn_layer = nn.Sequential(
@@ -87,15 +84,13 @@ class Net(nn.Module):
         img_out = self.cnn_layer(x) 
         fc_out = self.fc_layer(img_out)  
         batch_size = x.size(0)
-
-        # print(batch_size)   
-        out_features = self.branch[0][-1].out_features  # 例: 1
+        out_features = self.branch[0][-1].out_features 
     
         output_str = torch.zeros(batch_size, out_features, device=fc_out.device)
         output_left = torch.zeros(batch_size, out_features, device=fc_out.device)
         output_right = torch.zeros(batch_size, out_features, device=fc_out.device)
     
-        branch_indices = torch.argmax(c, dim=1)  # (B,)
+        branch_indices = torch.argmax(c, dim=1) 
     
         mask0 = (branch_indices == 0)
         mask1 = (branch_indices == 1)
@@ -132,8 +127,6 @@ class deep_learning:
         self.accuracy = 0
         self.loss_all =0.0
         self.max_freq = 0
-        self.results_train = {}
-        self.results_train['loss'], self.results_train['accuracy'] = [], []
         self.x_test = []
         self.c_test = []
         self.t_test = []
@@ -142,7 +135,6 @@ class deep_learning:
         self.first_flag = True
         self.direction_counter = Counter()
         torch.backends.cudnn.benchmark = False
-        # self.writer = SummaryWriter(log_dir='/home/takumi/catkin_ws/src/nav_cloning/runs')
 
     def load_dataset(self, image_path, dir_path, vel_path):
         self.x_cat = torch.load(image_path)
@@ -184,22 +176,6 @@ class deep_learning:
                          device=self.device).unsqueeze(0)
         
         self.max_freq = max(self.max_freq, self.direction_counter[tuple(dir_cmd)])
-        current_freq = self.direction_counter[tuple(dir_cmd)]
-
-        # if current_freq > 0:
-        #     factor = ((self.max_freq + current_freq - 1) // current_freq)**2
-        # else:
-        #     factor = 1
-
-        # if factor > 9:
-        #     factor = 9
-
-        # for i in range(factor):
-        #     self.x_cat = torch.cat([self.x_cat, x], dim=0)
-        #     self.c_cat = torch.cat([self.c_cat, c], dim=0)
-        #     self.t_cat = torch.cat([self.t_cat, t], dim=0)
-        
-        # self.direction_counter[tuple(dir_cmd)] += factor
         
         if dir_cmd == (0, 1, 0) or dir_cmd == (0, 0, 1):  
             for i in range(PADDING_DATA):
@@ -233,9 +209,7 @@ class deep_learning:
         self.t_test.append(t_test)
 
     def loss_branch(self, dir_cmd, target, output):
-        #mask command branch [straight, left, straight]
         command_mask = []
-        # command = dir_cmd.index(max(dir_cmd))
         command = torch.argmax(dir_cmd,dim=1)
         command_mask.append((command == 0).clone().detach().to(torch.float32).to(self.device))
         command_mask.append((command == 1).clone().detach().to(torch.float32).to(self.device))
@@ -260,7 +234,6 @@ class deep_learning:
         if self.first_flag:
             return
         #self.device = torch.device('cuda')
-        # print("on_training:",self.on_count)
         self.net.train()
         dataset = TensorDataset(self.x_cat, self.c_cat, self.t_cat)
         train_dataset = DataLoader(dataset, batch_size=BATCH_SIZE, generator=torch.Generator(
@@ -276,29 +249,19 @@ class deep_learning:
             y_train = self.net(x_train, c_train)
             # y_train = y_train[torch.argmax(c_train)]
             loss = self.loss_branch(c_train, t_train, y_train)
-            # loss = self.criterion(y_train, t_train)
             loss.backward()
             self.loss_all = loss.item()
             self.optimizer.step()
-            # self.writer.add_scalar("on_loss", loss_on, self.on_count)
-            # self.on_count +=1
         return self.loss_all
 
     def off_trains(self):
-        #self.device = torch.device('cuda')
+        # self.device = torch.device('cuda')
         print(self.device)
         # <Training mode>
         # <dataloder>
-        # train_dataset = DataLoader(dataset, batch_size=BATCH_SIZE, generator=torch.Generator(
-            # 'cpu').manual_seed(0), shuffle=True)
         dataset = TensorDataset(self.x_cat, self.c_cat, self.t_cat)
         train_dataset = DataLoader(dataset, batch_size=BATCH_SIZE,
         shuffle=True)
-        # x_test = torch.stack(self.x_test)
-        # c_test = torch.stack(self.c_test)
-        # t_test = torch.stack(self.t_test)
-        # test_dataset = TensorDataset(x_test, c_test, t_test)
-        # test_dataset = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         for epoch in range(EPOCH):
             self.net.train()
@@ -318,32 +281,13 @@ class deep_learning:
                 self.optimizer.zero_grad()
                 y_tensor = self.net(x_tensor, c_tensor)
                 loss = self.loss_branch(c_tensor, t_tensor, y_tensor)
-            # print("y_train=",y_train.shape,"t_tensor",t_tensor.shape)
                 loss.backward()
                 self.optimizer.step()
                 self.loss_all += loss.item()
                 count += 1
 
             average_loss = self.loss_all / count
-            # self.writer.add_scalar("Average Loss per Epoch", average_loss, epoch)
             print(f"Epoch {epoch+1}, Average Loss: {average_loss:.4f}")
-
-            # self.net.eval()
-            # self.loss_test_all = 0.0
-            # count_test = 0
-            # for x_test, c_test, t_test in tqdm(test_dataset):
-            #     x_test = x_test.to(self.device, non_blocking=True)
-            #     c_test = c_test.to(self.device, non_blocking=True)
-            #     t_test = t_test.to(self.device, non_blocking=True)
-
-            #     y_test = self.net(x_test, c_test)
-            #     loss_test = self.loss_branch(c_test, t_test, y_test)
-            #     self.loss_test_all += loss_test.item()
-            #     count_test += 1
-
-            # average_loss_test = self.loss_test_all / count_test
-            # # self.writer.add_scalar("Average Test Loss per Epoch", average_loss_test, epoch)
-            # print(f"Epoch {epoch+1}, Test Loss: {average_loss_test:.4f}")
 
     def act_and_trains(self, img, dir_cmd, train_dataset):
         # <Training mode>
@@ -356,18 +300,13 @@ class deep_learning:
             t_train.to(self.device, non_blocking=True)
             break
 
-        # デバッグ用
-        # print(f"c_train: {c_train}")
         # <use data augmentation>
         # x_train = self.transform_color(x_train)
             
         # <learning>
         self.optimizer.zero_grad()
         y_train = self.net(x_train, c_train)
-        # y_train = y_train[torch.argmax(c_train)]
-        # print("y_train=",y_train.shape,"t_train",t_train.shape)
         loss = self.loss_branch(c_train, t_train, y_train)
-        # loss = self.criterion(y_train, t_train)
         loss.backward()
         self.loss_all = loss.item() 
         self.optimizer.step()
@@ -400,15 +339,10 @@ class deep_learning:
 
         return action_value_test.item()
 
-    def result(self):
-        accuracy = self.accuracy
-        return accuracy
-
     def save(self, save_path):
         # <model save>
         path = save_path + time.strftime("%Y%m%d_%H:%M:%S")
         os.makedirs(path)
-        # torch.save(self.net.state_dict(), path + '/model_gpu.pt')
         torch.save({
             'model_state_dict': self.net.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
@@ -423,7 +357,6 @@ class deep_learning:
 
     def load(self, load_path):
         # <model load>
-        # self.net.load_state_dict(torch.load(load_path))
         checkpoint = torch.load(load_path)
         self.net.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

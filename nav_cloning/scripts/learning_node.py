@@ -8,7 +8,6 @@ import rospy
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-# from nav_cloning_with_direction_net_branch import *
 from network import *
 from skimage.transform import resize
 from geometry_msgs.msg import Twist
@@ -17,7 +16,6 @@ from std_msgs.msg import Int8
 from std_srvs.srv import Trigger
 from nav_msgs.msg import Path
 from std_msgs.msg import Int8MultiArray
-#from waypoint_nav.msg import cmd_dir_intersection
 from scenario_navigation_msgs.msg import cmd_dir_intersection
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_srvs.srv import Empty
@@ -48,8 +46,6 @@ class nav_cloning_node:
         self.mode_save_srv = rospy.Service('/model_save', Trigger, self.callback_model_save)
         self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
         self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path) 
-        # self.path_sub = rospy.Subscriber("/move_base/GlobalPlanner/plan", Path, self.callback_path)
- #       self.cmd_dir_sub = rospy.Subscriber("/cmd_dir_intersection", Int8MultiArray, self.callback_cmd,queue_size=1)
         self.cmd_dir_sub = rospy.Subscriber("/cmd_dir_intersection", cmd_dir_intersection, self.callback_cmd,queue_size=1)
         self.min_distance = 0.0
         self.action = 0.0
@@ -128,9 +124,6 @@ class nav_cloning_node:
 
     def callback_cmd(self, data):
         self.cmd_dir_data = data.cmd_dir
-        # self.cmd_dir_data = (1, 0, 0)
-        # self.cmd_dir_data = (0, 1, 0)
-        # self.cmd_dir_data = (0, 0, 1)
 
     def callback_vel(self, data):
         self.vel = data
