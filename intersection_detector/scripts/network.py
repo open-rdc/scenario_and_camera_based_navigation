@@ -65,9 +65,7 @@ class Net(nn.Module):
         #print("lstm_in:",frameFeatures.shape)
         lstm_out,_ = self.lstm(frameFeatures)
         #<lstm[B,1280]-> FC[B,4,512]>
-        # class_out = self.output_layer(lstm_out[:,-1,:])
         # print("lstm_out:",lstm_out.shape)
-        # for f in range(0,lstm_out.size()[0]):
         class_out = self.output_layer(lstm_out)
         # print("class_out",class_out.shape)
         class_out =torch.mean(class_out,dim=1)
@@ -113,8 +111,6 @@ class deep_learning:
         self.first_test_flag = True
         self.first_time_flag = True
         torch.backends.cudnn.benchmark = False
-        # self.writer = SummaryWriter(log_dir='/home/takumi/catkin_ws/src/intersection_detector/runs')
-        # torch.manual_seed(0)
         torch.autograd.set_detect_anomaly(True)
         self.loss_all = 0.0
         self.intersection_test = torch.zeros(1,8).to(self.device)
@@ -122,7 +118,6 @@ class deep_learning:
         self.diff_flag = False
 
     def make_dataset(self, img, intersection_label):
-        # self.device = torch.device('cpu')
         # make tensor(T,C,H,W)
         if self.first_flag:
             self.x_cat = torch.tensor(
@@ -145,11 +140,10 @@ class deep_learning:
         t = torch.tensor([intersection_label], dtype=torch.float32,
                          device=self.device)
         print(self.old_label)
-        #<>
         if intersection_label == self.old_label:
             self.diff_flag = False
             self.x_cat = torch.cat([self.x_cat, x], dim=0)
-            print("cat x_cat!!",self.x_cat.shape)
+            print("cat x_cat",self.x_cat.shape)
         else:
             self.first_flag = True
             self.diff_flag = True
@@ -388,56 +382,6 @@ class deep_learning:
         finish_flag = True
 
         return self.train_accuracy, self.loss_all
-    def training(self, image_path,label_path):
-        # self.device = torch.device('cuda')
-        print(self.device)
-        load_x_tensor = torch.load(image_path)
-        load_t_tensor = torch.load(label_path)
-        # print("x_tensor:",load_x_tensor,"t_tensor:",load_t_tensor)
-        print("label info :",torch.sum(load_t_tensor ,dim=0))
-        dataset = TensorDataset(load_x_tensor, load_t_tensor)
-        train_dataset = DataLoader(
-            dataset, batch_size=BATCH_SIZE, generator=torch.Generator('cpu'), shuffle=False)
-    # <training mode>
-        self.net.train()
-        self.train_accuracy = 0
-    
-    # <split dataset and to device>
-        for epoch in range(EPOCH_NUM):
-            print('epoch', epoch) 
-            for x_train,t_label_train in train_dataset:
-                # if i == random_train:
-                # x_train,t_label_train = train_dataset
-                # x_train.to(self.device, non_blocking=True)
-                # t_label_train.to(self.device, non_blocking=True)
-                x_train = x_train.to(self.device,non_blocking=True)
-                t_label_train = t_label_train.to(self.device, non_blocking=True)
-        # <use transform>
-                # print("ddd=",x_train[0,:,:,:,:].shape)
-            # for i in range(BATCH_SIZE):
-                # x_train = self.transform_color(x_train)
-                # self.transform_train(x_train[i,:,:,:,:])
-                # x_train =self.normalization(x_train)
-        # <learning>
-                self.optimizer.zero_grad()
-                y_train = self.net(x_train)
-                loss_all = self.criterion(y_train, t_label_train)
-                # print("y = ",y_train.shape,"t=",t_label_train)
-                self.train_accuracy += torch.sum(torch.max(y_train, 1)
-                                                    [1] == torch.max(t_label_train, 1)[1]).item()
-                print("epoch:",epoch, "accuracy :", self.train_accuracy, "/",len(t_label_train),
-                        (self.train_accuracy/len(t_label_train))*100, "%","loss :",loss_all.item())
-                self.writer.add_scalar("loss", loss_all.item(), self.count)
-                self.writer.add_scalar("accuracy",(self.train_accuracy/len(t_label_train))*100,self.count)
-                loss_all.backward()
-                self.optimizer.step()
-                self.loss_all = loss_all.item()
-                self.count += 1
-                self.train_accuracy = 0
-        print("Finish learning!!")
-        finish_flag = True
-
-        return self.train_accuracy, self.loss_all
 
     def test(self, img):
         self.net.eval()
@@ -454,16 +398,11 @@ class deep_learning:
         self.x_cat_test = torch.cat([self.x_cat_test, x], dim=0)
         # print("x_test_cat:",self.x_cat_test.shape)
         if self.x_cat_test.size()[0] == FRAME_SIZE:
-            # self.x_cat_time_test = self.x_cat_test.unsqueeze(0)
-            # torch.cat((self.x_cat_time, self.x_cat_test.unsqueeze(0)), dim=0)
-            #self.first_test_flag = True
             self.intersection_test = self.net(self.x_cat_test.unsqueeze(0))
             print("s:",self.intersection_test.shape)
             self.x_cat_test = self.x_cat_test[1:]
         # print(x_test_ten.shape,x_test_ten.device,c_test.shape,c_test.device)
-    # <test phase>
-            # self.intersection_test = self.net(self.x_cat_test.unsqueeze(0))
-        
+    # <test phase>        
         return torch.max(self.intersection_test, 1)[1].item()
 
     def save_tensor(self, dataset_tensor, save_path, file_name):
@@ -476,7 +415,7 @@ class deep_learning:
         # <model save>
         path = save_path + time.strftime("%Y%m%d_%H:%M:%S")
         os.makedirs(path)
-        torch.save(self.net.state_dict(), path + '/model_gpu.pt')
+        torch.save(self.net.state_dict(), path + '/model.pt')
     
     def load(self, load_path):
         # <model load>
