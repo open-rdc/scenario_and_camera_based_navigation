@@ -1,1 +1,46 @@
 # scenario_and_camera_based_navigation
+ーーーーー編集中ーーーーー 
+
+navigation software depend on camera image and scenario 
+
+
+## Dependencies 
+
+## Install 
+
+### Step1
+
+- nvidia-driver, cuda 
+
+- ros noetic 
+
+- pytorch 
+```
+pip3 install torch torchvision torchaudio scikit-image tensorboard
+``` 
+
+- mecab 
+``` 
+sudo apt install mecab
+sudo apt install libmecab-dev
+pip3 install mecab-python3
+git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git
+cd mecab-ipadic-neologd
+./bin/install-mecab-ipadic-neologd -n
+apt install -y ros-noetic-jsk-visualization
+sudo cp /etc/mecabrc /usr/local/etc/
+``` 
+
+### step2
+make workspace
+```
+mkdir -p ~/catkin_ws/src && cd ~/catkin_ws/src/
+git clone git@github.com:open-rdc/scenario_and_camera_based_navigation.git
+wstool init
+wstool merge scenario_and_camera_based_navigation/package.install
+wstool up
+rosdep update
+rosdep install --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+./real_tsudanuma2-3_sim/setup/step1.bash
+source ~/.bashrc
+```

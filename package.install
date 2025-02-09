@@ -6,3 +6,15 @@
     uri: https://github.com/haruyama8940/scenario_navigation_msgs.git
     local-name: scenario_navigation_msgs
     version: detailed_label
+- git:
+    uri: https://github.com/open-rdc/timed_roslaunch.git
+    local-name: timed_roslaunch
+    version: melodic-devel
+- git:
+    uri: https://github.com/masakifujiwara1/real_tsudanuma2-3_sim.git
+    local-name: real_tsudanuma2-3_sim
+    version: v2.1
+- git:
+    uri: https://github.com/TakumiIshiguro/orne_navigation.git
+    local-name: orne_navigation
+    version: update_camera
