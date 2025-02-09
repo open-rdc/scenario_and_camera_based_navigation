@@ -20,10 +20,6 @@ from torch.utils.tensorboard import SummaryWriter
 import random
 import glob
 #test
-from torcheval.metrics.functional import multiclass_accuracy
-from torcheval.metrics.functional import multiclass_precision
-from torcheval.metrics.functional import binary_accuracy
-from torcheval.metrics import BinaryAccuracy
 # HYPER PARAM
 BATCH_SIZE = 32
 FRAME_SIZE = 16

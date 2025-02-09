@@ -22,7 +22,6 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from collections import Counter
 from yaml import load
-from tqdm.auto import tqdm
 
 # HYPER PARAM
 BATCH_SIZE = 8
@@ -267,7 +266,7 @@ class deep_learning:
             self.net.train()
             self.loss_all = 0.0
             count = 0
-            for x_tensor, c_tensor, t_tensor in tqdm(train_dataset):
+            for x_tensor, c_tensor, t_tensor in train_dataset:
                 x_tensor = x_tensor.to(self.device, non_blocking=True)
                 c_tensor = c_tensor.to(self.device, non_blocking=True)
                 t_tensor = t_tensor.to(self.device, non_blocking=True)
