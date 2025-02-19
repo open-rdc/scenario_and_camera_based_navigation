@@ -15,7 +15,7 @@
   <arg name="gui" default="true"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find nav_cloning)/../world/$(arg world_name)"/> 
+    <arg name="world_name" value="$(find intersection_detector)/../data/world/$(arg world_name)"/> 
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="$(arg gui)"/>
@@ -37,7 +37,7 @@
   </node>
 
   <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
-        args="18 orne_navigation_executor play_waypoints_nav_common.launch robot_name:=gamma map_file:=$(find intersection_detector)/../maps/$(arg map_file) waypoints_file:=$(find intersection_detector)/../waypoints/$(arg waypoints_file) dist_err:=$(arg dist_err) cmd_vel:=/cmd_vel use_waypoint_nav:=$(arg use_waypoint_nav)"
+        args="18 orne_navigation_executor play_waypoints_nav_common.launch robot_name:=gamma map_file:=$(find intersection_detector)/../data/maps/$(arg map_file) waypoints_file:=$(find intersection_detector)/../data/waypoints/$(arg waypoints_file) dist_err:=$(arg dist_err) cmd_vel:=/cmd_vel use_waypoint_nav:=$(arg use_waypoint_nav)"
         name="timed_roslaunch2" >
   </node>
 
