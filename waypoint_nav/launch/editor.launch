@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="map_file" default="$(find waypoint_nav)/../maps/cit_3f_map"/>
-    <arg name="filename" default="$(find waypoint_nav)/../waypoints/route_a-f.yaml"/>
+    <!-- <arg name="map_file" default="$(find waypoint_nav)/../data/maps/cit_3f_map"/> -->
+    <arg name="map_file" default="$(find waypoint_nav)/../data/maps/tsudanuma"/>
+    <!-- <arg name="filename" default="$(find waypoint_nav)/../data/waypoints/route_a-f.yaml"/> -->
+    <arg name="filename" default="$(find waypoint_nav)/../data/waypoints/tsudanuma.yaml"/>
     <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_file).yaml"/>
 
     <node pkg="waypoint_nav" type="waypoint_editor" name="waypoint_editor" output="screen">
