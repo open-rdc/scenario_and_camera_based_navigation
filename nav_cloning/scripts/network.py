@@ -197,15 +197,6 @@ class deep_learning:
 
         print("dataset_num:", len(dataset))
         return dataset, len(dataset), train_dataset
-    
-    def make_test_dataset(self, img, dir_cmd, target_angle):
-        x_test = torch.tensor(img, dtype=torch.float32).permute(2, 0, 1)   # (C, H, W)
-        c_test = torch.tensor(dir_cmd, dtype=torch.float32)
-        t_test = torch.tensor([target_angle], dtype=torch.float32)
-
-        self.x_test.append(x_test)
-        self.c_test.append(c_test)
-        self.t_test.append(t_test)
 
     def loss_branch(self, dir_cmd, target, output):
         command_mask = []
@@ -349,7 +340,8 @@ class deep_learning:
         }, path + '/model.pt')
         print("save_model")
 
-    def save_tensor(self, input_tensor, path, file_name):
+    def save_tensor(self, input_tensor, save_path, file_name):
+        path = save_path + time.strftime("%Y%m%d_%H:%M:%S")
         os.makedirs(path)
         torch.save(input_tensor, path + file_name)
         print("save_dataset_tensor:",)

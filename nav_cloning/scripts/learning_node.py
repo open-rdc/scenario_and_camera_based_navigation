@@ -162,18 +162,9 @@ class nav_cloning_node:
         if self.is_started == False:
             return
         img = resize(self.cv_image, (48, 64), mode='constant')
-        
-        # r, g, b = cv2.split(img)
-        # img = np.asanyarray([r,g,b])
-
         img_left = resize(self.cv_left_image, (48, 64), mode='constant')
-        #r, g, b = cv2.split(img_left)
-        #img_left = np.asanyarray([r,g,b])
-
         img_right = resize(self.cv_right_image, (48, 64), mode='constant')
-        #r, g, b = cv2.split(img_right)
-        #img_right = np.asanyarray([r,g,b])
-        # cmd_dir = np.asanyarray(self.cmd_dir_data)
+
         ros_time = str(rospy.Time.now())
 
         # if self.episode == 0:
@@ -193,21 +184,10 @@ class nav_cloning_node:
         #     self.dl.save_tensor(x_cat, self.save_image_path, '/image.pt')
         #     self.dl.save_tensor(c_cat, self.save_dir_path, '/dir.pt')
         #     self.dl.save_tensor(t_cat, self.save_vel_path, '/vel.pt')
-        # willow
-        # if self.episode == self.episode_num + 1800:
-        # cross
-        # if self.episode == self.episode_num + 400:
-            # os.system('killall roslaunch')
-            # sys.exit()
+   
         if self.episode == self.episode_num + 10000:
             os.system('killall roslaunch')
             sys.exit()
-
-        # if self.episode % 5 == 0:
-        #     self.dl.make_test_dataset(img, self.cmd_dir_data, self.action)
-        #     print("make test dataset")
-        # else:
-        #     pass
 
         if self.learning:
             target_action = self.action
@@ -217,13 +197,6 @@ class nav_cloning_node:
                 action = self.dl.act(img, self.cmd_dir_data)
                 angle_error = abs(action - target_action)
                 loss = 0
-                
-                # if self.episode % 3 == 0:
-                #     self.dl.make_test_dataset(img, self.cmd_dir_data, self.action)
-                #     print("make test dataset")
-                #     angle_error = 0.0
-                # else:
-                #     pass
 
                 if angle_error > 0.05:
                     dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
