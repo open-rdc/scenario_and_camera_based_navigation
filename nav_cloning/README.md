@@ -23,4 +23,4 @@
 - scrips
   - learning_node.py: 学習，テストを一括で行うノード
   - network.py: 深層学習機
-  - test_node: テストのみを行うノード
+  - test_node.py: テストのみを行うノード

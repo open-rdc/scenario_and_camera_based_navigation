@@ -5,7 +5,9 @@ navigation software depend on camera image and scenario
 
 
 ## Dependencies 
-
+- ubuntu 20.04 LTS
+- pythorch
+- 
 ## Install 
 
 ### Step1
@@ -45,4 +47,33 @@ sudo apt install python3-catkin-tools -y
 catkin build
 source ~/.bashrc
 source devel/setup.bash
+```
+
+## example 
+### 1. learning (option)
+```
+cd catkin_ws/src/scenario_and_camera_based_navigation/experiments
+```
+#### path following module
+```
+./nav_cloning.sh
+``` 
+#### corridor clastify module 
+```
+./intersection_detector.sh
+```
+### 2. navigation
+1. write a scenario `hoge/hoge`
+2. move to the path and open three terminal
+```
+cd catkin_ws/src/scenario_and_camera_based_navigation/experiments/test
+```
+3. launch simulataion
+```
+./intersecton_detector.sh
+./nav_cloning.sh
+```
+4. launch navigation
+```
+./scenario_navigation.sh
 ```
