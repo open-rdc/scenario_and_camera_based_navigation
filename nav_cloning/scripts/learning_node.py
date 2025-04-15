@@ -13,6 +13,7 @@ from skimage.transform import resize
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseArray
 from std_msgs.msg import Int8
+from std_msgs.msg import Float32
 from std_srvs.srv import Trigger
 from nav_msgs.msg import Path
 from std_msgs.msg import Int8MultiArray
@@ -44,9 +45,12 @@ class nav_cloning_node:
         self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
         self.loop_count_srv = rospy.Service('loop_count',SetBool,self.loop_count_callback)
         self.mode_save_srv = rospy.Service('/model_save', Trigger, self.callback_model_save)
-        self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
+        self.pose_sub = rospy.Subscriber("/mcl_pose", PoseWithCovarianceStamped, self.callback_pose)
         self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path) 
         self.cmd_dir_sub = rospy.Subscriber("/cmd_dir_intersection", cmd_dir_intersection, self.callback_cmd,queue_size=1)
+        self.alpha_sub = rospy.Subscriber("/alpha", Float32, self.callback_alpha)
+        self.odom_sub = rospy.Subscriber("/odom", Odometry, self.callback_odom)
+        self.joy_vel_sub = rospy.Subscriber("/joy_vel", Twist, self.callback_joy_vel)
         self.min_distance = 0.0
         self.action = 0.0
         self.episode = 0
@@ -150,6 +154,17 @@ class nav_cloning_node:
         model_res.success = True
         return model_res
     
+    def callback_alpha(self, msg):
+        self.alpha = msg.data
+        # print("Received /alpha:", self.alpha)
+
+    def callback_odom(self, msg):
+        self.liner_odom = msg.twist.twist.linear.x
+
+    def callback_joy_vel(self, msg):
+        self.joy_vel = msg.angular.z
+        print(self.joy_vel)
+
     def loop(self):
         if self.cv_image.size != 640 * 480 * 3:
             return
@@ -198,7 +213,7 @@ class nav_cloning_node:
                 angle_error = abs(action - target_action)
                 loss = 0
 
-                if angle_error > 0.05:
+                if angle_error > 0.05 and self.alpha > 0.05 and self.liner_odom > 0.05 and abs(self.joy_vel) == 0:
                     dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
                     action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
                     action = action * 1.5
@@ -209,7 +224,16 @@ class nav_cloning_node:
                         action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
                         dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
                         action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
-                                
+
+                if abs(self.joy_vel) != 0:
+                    target_action = self.joy_vel
+                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
+                    action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
+                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
+                    action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
+                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
+                    action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
+
                 else:
                     loss = self.dl.trains(2)
                     print("Online Training")

@@ -14,6 +14,10 @@
   <arg name="robot_Y" default="0.0" />
   <arg name="gui" default="true"/>
 
+  <arg name="joy_config" default="joy" />
+  <arg name="joy_dev" default="/dev/input/js1" />
+  <arg name="cmd_vel" default="/joy_vel"/>
+
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find nav_cloning)/../data/world/$(arg world_name)"/> 
     <arg name="paused" value="false"/>
@@ -45,4 +49,16 @@
         args="30 nav_cloning start_wp_nav.launch"
         name="timed_roslaunch3" >
   </node>
+      
+  <node pkg="joy" type="joy_node" name="joy_node">
+        <param name="dev" value="$(arg joy_dev)" />
+        <param name="deadzone" value="0.3" />
+        <param name="autorepeat_rate" value="20" />
+  </node>
+
+  <node pkg="teleop_twist_joy" name="teleop_twist_joy" type="teleop_node">
+        <rosparam command="load" file="$(find orne_bringup)/config/$(arg joy_config).yaml" />
+        <remap from="cmd_vel" to="$(arg cmd_vel)"/>
+  </node>
+
 </launch>
