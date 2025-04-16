@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="script" default="nav_cloning_node.py"/>
+  <arg name="map_file" default="willowgarage.yaml"/>
+  <arg name="waypoints_file" default="willow_loop.yaml"/>
+  <arg name="dist_err" default="0.8"/>
+  <arg name="initial_pose_x" default="-8" />
+  <arg name="initial_pose_y" default="-16" />
+  <arg name="initial_pose_a" default="0.0" />
+  <arg name="use_waypoint_nav" default="true" />
+
+  <!-- <param name="robot_description" command="$(find xacro)/xacro $(find orne_description)/urdf/gamma/orne_gamma.urdf.xacro" /> -->
+
+  <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
+        args="10 nav_cloning nav_cloning.launch script:=$(arg script)"
+        name="timed_roslaunch" output="screen" >
+  </node>
+
+  <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
+        args="18 orne_navigation_executor play_waypoints_nav_common.launch robot_name:=gamma map_file:=$(find nav_cloning)/../data/maps/$(arg map_file) waypoints_file:=$(find nav_cloning)/../data/waypoints/$(arg waypoints_file) dist_err:=$(arg dist_err) use_waypoint_nav:=$(arg use_waypoint_nav)"
+        name="timed_roslaunch2" >
+  </node>
+
+  <node pkg="timed_roslaunch" type="timed_roslaunch.sh"
+        args="30 nav_cloning start_wp_nav.launch"
+        name="timed_roslaunch3" >
+  </node>
+</launch>
