@@ -1,22 +1,25 @@
 # scenario_and_camera_based_navigation
-ーーーーー編集中ーーーーー 
 
-navigation software depend on camera image and scenario 
+Navigation software based on camera images and scenarios
 
+<!-- <img src="system.png"> -->
 
 ## Dependencies 
 - ubuntu 20.04 LTS
-- pythorch
-- 
+- ROS Noetic
+- PyTorch
+
 ## Install 
 
-### Step1
+### Step 0: Install ROS Noetic and NVIDIA drivers
+
+### Step 1: Install required Python libraries and MeCab
 - PyTorch, CUDA-Toolkit 
 ```
 pip3 install torch torchvision torchaudio scikit-image tensorboard
 ``` 
 
-- mecab 
+- MeCab 
 ``` 
 sudo apt install mecab -y 
 sudo apt install libmecab-dev
@@ -29,8 +32,7 @@ sudo apt install -y ros-noetic-jsk-visualization
 sudo cp /etc/mecabrc /usr/local/etc/
 ``` 
 
-### step2
-make workspace
+### Step 2: Build the Workspace
 ```
 cd
 mkdir -p ~/catkin_ws/src && cd ~/catkin_ws/src/
@@ -49,31 +51,52 @@ source ~/.bashrc
 source devel/setup.bash
 ```
 
-## example 
-### 1. learning (option)
+## Example Usage
+### 1. Learning (option)
 ```
 cd catkin_ws/src/scenario_and_camera_based_navigation/experiments
 ```
-#### path following module
+-  path following module
 ```
 ./nav_cloning.sh
 ``` 
-#### corridor clastify module 
+- corridor clastify module 
 ```
 ./intersection_detector.sh
 ```
-### 2. navigation
-1. write a scenario `hoge/hoge`
-2. move to the path and open three terminal
+### 2. Navigation
+1. Write a scenario file(optional) 
+
+   Create and edit a scenario file in the following directory:
+
+    `scenario_navigation/config/Scenario/hoge.txt`
+
+2. Set the scenario_path 
+
+
+   Edit the launch file `scenarion_navigation/launch/scenario_navigation.launch`
+    to specify which scenario file to use:
+
+```scenarion_navigation/launch/scenario_navigation.launch 
+<launch>
+  <node name="cmd_dir_executor" pkg="scenario_navigation" type="cmd_dir_executor_detailed" output="screen" />
+  <node name="scenario_parser" pkg="scenario_navigation" type="scenario_parser_jsk.py" output="screen" >
+    <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario01.txt" />
+    # if you write scenario, change under value to your file name
+    <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/hoge.txt" />
+  </node>
+</launch>
 ```
-cd catkin_ws/src/scenario_and_camera_based_navigation/experiments/test
+3. Move to the test directory and open three terminals: 
 ```
-3. launch simulataion
+cd ~/catkin_ws/src/scenario_and_camera_based_navigation/experiments/test
+```
+4. Launch the simulataion
 ```
 ./intersecton_detector.sh
 ./nav_cloning.sh
 ```
-4. launch navigation
+5. Launch scenario-based navigation
 ```
 ./scenario_navigation.sh
 ```
