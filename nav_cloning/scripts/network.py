@@ -12,6 +12,7 @@ from os.path import expanduser
 import torch
 import torchvision
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset, Dataset, random_split
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
@@ -24,95 +25,64 @@ from collections import Counter
 from yaml import load
 
 # HYPER PARAM
-BATCH_SIZE = 8
-BRANCH = 3
+BATCH_SIZE = 64
 EPOCH = 5
 PADDING_DATA = 7
 
-class Net(nn.Module):
-    def __init__(self, n_channel, n_out):
+class Perception(nn.Module):
+    def __init__(self):
         super().__init__()
-    # Network CNN 3 + FC 2 + fc2
-       # nn. is with parameters to be adjusted
-        self.conv1 = nn.Conv2d(n_channel, 32, kernel_size=8, stride=4)
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=2)
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
         self.fc4 = nn.Linear(960, 512)
         self.fc5 = nn.Linear(512, 512)
-        self.fc6 = nn.Linear(512, 256)
-        self.fc7 = nn.Linear(256, n_out)
-        self.relu = nn.ReLU(inplace=True)
-    # Weight set
-        torch.nn.init.kaiming_normal_(self.conv1.weight)
-        torch.nn.init.kaiming_normal_(self.conv2.weight)
-        torch.nn.init.kaiming_normal_(self.conv3.weight)
-        torch.nn.init.kaiming_normal_(self.fc4.weight)
-        torch.nn.init.kaiming_normal_(self.fc5.weight)
-        torch.nn.init.kaiming_normal_(self.fc6.weight)
-        torch.nn.init.kaiming_normal_(self.fc7.weight)
         self.flatten = nn.Flatten()
-    # CNN layer
-        self.cnn_layer = nn.Sequential(
-            self.conv1,
-            self.relu,
-            self.conv2,
-            self.relu,
-            self.conv3,
-            self.relu,
-            # self.maxpool,
-            self.flatten
-        )
-    # FC layer
-        self.fc_layer = nn.Sequential(
-            self.fc4,
-            self.relu,
-            self.fc5,
-            self.relu
-        )
-    # Concat layer (CNN output + Cmd data)         
-        self.branch = nn.ModuleList([
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = self.flatten(x)
+        x = F.relu(self.fc4(x))
+        x = F.relu(self.fc5(x))
+        return x
+    
+class BranchedControl(nn.Module):
+    def __init__(self, BRANCH=3):
+        super().__init__()
+        self.branches = nn.ModuleList([
             nn.Sequential(
                 nn.Linear(512, 256),
-                self.relu,
-                nn.Linear(256, n_out)
-            )for i in range(BRANCH)
+                nn.ReLU(),
+                nn.Linear(256, 1)
+            ) for _ in range(BRANCH)
         ])
-        
-    # forward layer
-    def forward(self, x, c):
-        img_out = self.cnn_layer(x) 
-        fc_out = self.fc_layer(img_out)  
-        batch_size = x.size(0)
-        out_features = self.branch[0][-1].out_features 
-    
-        output_str = torch.zeros(batch_size, out_features, device=fc_out.device)
-        output_left = torch.zeros(batch_size, out_features, device=fc_out.device)
-        output_right = torch.zeros(batch_size, out_features, device=fc_out.device)
-    
-        branch_indices = torch.argmax(c, dim=1) 
-    
-        mask0 = (branch_indices == 0)
-        mask1 = (branch_indices == 1)
-        mask2 = (branch_indices == 2)
-    
-        if mask0.any():
-            output_str[mask0] = self.branch[0](fc_out[mask0])
-        if mask1.any():
-            output_left[mask1] = self.branch[1](fc_out[mask1])
-        if mask2.any():
-            output_right[mask2] = self.branch[2](fc_out[mask2])
-    
-        output = torch.stack([output_str, output_left, output_right], dim=0)
-        # print(output)
-        return output 
 
+    def forward(self, joint, cmd):
+        branch_outputs = [branch(joint) for branch in self.branches]
+        branch_outputs = torch.stack(branch_outputs, dim=1).squeeze(-1)
+        selected = (cmd * branch_outputs).sum(dim=1, keepdim=True)
+        return selected
+
+class FullBranchedModel(nn.Module):
+    def __init__(self, BRANCH=3):
+        super().__init__()
+        self.perception = Perception()
+        self.control = BranchedControl(BRANCH=BRANCH)
+
+    def forward(self, image, cmd):
+        p = self.perception(image)
+        out = self.control(p, cmd)
+        return out
+    
 class deep_learning:
-    def __init__(self, n_channel=3, n_action=1):
+    def __init__(self):
         # tensor device choiece
         self.device = torch.device(
             'cuda:0' if torch.cuda.is_available() else 'cpu')
         torch.manual_seed(0)
-        self.net = Net(n_channel, n_action)
+        self.net = FullBranchedModel().to(self.device)
         self.net.to(self.device)
         print(self.device)
         self.optimizer = optim.Adam(
@@ -120,7 +90,6 @@ class deep_learning:
         self.totensor = transforms.ToTensor()
         self.transform_color = transforms.ColorJitter(
             brightness=0.5, contrast=0.5, saturation=0.5)
-        self.n_action = n_action
         self.count = 0
         self.count_on = 0
         self.accuracy = 0
@@ -198,27 +167,27 @@ class deep_learning:
         print("dataset_num:", len(dataset))
         return dataset, len(dataset), train_dataset
 
-    def loss_branch(self, dir_cmd, target, output):
-        command_mask = []
-        command = torch.argmax(dir_cmd,dim=1)
-        command_mask.append((command == 0).clone().detach().to(torch.float32).to(self.device))
-        command_mask.append((command == 1).clone().detach().to(torch.float32).to(self.device))
-        command_mask.append((command == 2).clone().detach().to(torch.float32).to(self.device))
-        # print("command_mask:", command_mask)
-        # print("command:", command)
-        # print("output:", output)
-        # print("target:", target)
-        loss_branch = []
-        loss_function = 0
-        for i in range(BRANCH):
-            loss = (output[i] - target) ** 2 * command_mask[i].unsqueeze(1)
-            # print("loss:", loss)
-            loss_branch.append(loss)
-            # print("loss_branch:", loss_branch[i])
-            loss_function += loss_branch[i]
-            # print("loss_function:", loss_function)
-        #MSE
-        return torch.sum(loss_function)/BATCH_SIZE
+    # def loss_branch(self, dir_cmd, target, output):
+    #     command_mask = []
+    #     command = torch.argmax(dir_cmd,dim=1)
+    #     command_mask.append((command == 0).clone().detach().to(torch.float32).to(self.device))
+    #     command_mask.append((command == 1).clone().detach().to(torch.float32).to(self.device))
+    #     command_mask.append((command == 2).clone().detach().to(torch.float32).to(self.device))
+    #     # print("command_mask:", command_mask)
+    #     # print("command:", command)
+    #     # print("output:", output)
+    #     # print("target:", target)
+    #     loss_branch = []
+    #     loss_function = 0
+    #     for i in range(BRANCH):
+    #         loss = (output[i] - target) ** 2 * command_mask[i].unsqueeze(1)
+    #         # print("loss:", loss)
+    #         loss_branch.append(loss)
+    #         # print("loss_branch:", loss_branch[i])
+    #         loss_function += loss_branch[i]
+    #         # print("loss_function:", loss_function)
+    #     #MSE
+    #     return torch.sum(loss_function)/BATCH_SIZE
 
     def trains(self, iteration):
         if self.first_flag:
@@ -238,7 +207,8 @@ class deep_learning:
             self.optimizer.zero_grad()
             y_train = self.net(x_train, c_train)
             # y_train = y_train[torch.argmax(c_train)]
-            loss = self.loss_branch(c_train, t_train, y_train)
+            loss = self.criterion(y_train, t_train)
+            # loss = self.loss_branch(c_train, t_train, y_train)
             loss.backward()
             self.loss_all = loss.item()
             self.optimizer.step()
@@ -270,7 +240,7 @@ class deep_learning:
             # <learning>
                 self.optimizer.zero_grad()
                 y_tensor = self.net(x_tensor, c_tensor)
-                loss = self.loss_branch(c_tensor, t_tensor, y_tensor)
+                loss = self.criterion(y_tensor, t_tensor)
                 loss.backward()
                 self.optimizer.step()
                 self.loss_all += loss.item()
@@ -296,7 +266,8 @@ class deep_learning:
         # <learning>
         self.optimizer.zero_grad()
         y_train = self.net(x_train, c_train)
-        loss = self.loss_branch(c_train, t_train, y_train)
+        # loss = self.loss_branch(c_train, t_train, y_train)
+        loss = self.criterion(y_train, t_train)
         loss.backward()
         self.loss_all = loss.item() 
         self.optimizer.step()
@@ -308,7 +279,7 @@ class deep_learning:
         c_act = torch.tensor(dir_cmd, dtype=torch.float32,
                               device=self.device).unsqueeze(0)
         action_value_training = self.net(x_act, c_act)
-        action_value_training = action_value_training[torch.argmax(c_act)]
+        # action_value_training = action_value_training[torch.argmax(c_act)]
 
         return action_value_training.item(), self.loss_all
 
@@ -322,7 +293,7 @@ class deep_learning:
                               device=self.device).unsqueeze(0)
         # <test phase>
         action_value_test = self.net(x_test_ten, c_test)
-        action_value_test = action_value_test[torch.argmax(c_test)]
+        # action_value_test = action_value_test[torch.argmax(c_test)]
 
         for direction, count in self.direction_counter.items():
             print(f"Direction {direction}: {count}")

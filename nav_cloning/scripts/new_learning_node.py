@@ -8,11 +8,12 @@ import rospy
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-from network import *
+from new_network import *
 from skimage.transform import resize
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseArray
 from std_msgs.msg import Int8
+from std_msgs.msg import Float32
 from std_srvs.srv import Trigger
 from nav_msgs.msg import Path
 from std_msgs.msg import Int8MultiArray
@@ -46,6 +47,9 @@ class nav_cloning_node:
         self.pose_sub = rospy.Subscriber("/mcl_pose", PoseWithCovarianceStamped, self.callback_pose)
         self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path) 
         self.cmd_dir_sub = rospy.Subscriber("/cmd_dir_intersection", cmd_dir_intersection, self.callback_cmd,queue_size=1)
+        self.alpha_sub = rospy.Subscriber("/alpha", Float32, self.callback_alpha)
+        self.odom_sub = rospy.Subscriber("/odom", Odometry, self.callback_odom)
+        self.joy_vel_sub = rospy.Subscriber("/joy_vel", Twist, self.callback_joy_vel)
         self.min_distance = 0.0
         self.action = 0.0
         self.episode = 0
@@ -64,6 +68,11 @@ class nav_cloning_node:
         self.save_image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/image/'
         self.save_dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/dir/'
         self.save_vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/vel/'
+
+        name = "test"
+        self.load_image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/image/' + str(name) + '/image.pt'
+        self.load_dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/dir/' + str(name) + '/dir.pt'
+        self.load_vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/vel/' + str(name) + '/vel.pt'
 
         self.previous_reset_time = 0
         self.pos_x = 0.0
@@ -149,25 +158,40 @@ class nav_cloning_node:
         model_res.success = True
         return model_res
     
+    def callback_alpha(self, msg):
+        self.alpha = msg.data
+        # print("Received /alpha:", self.alpha)
+
+    def callback_odom(self, msg):
+        self.liner_odom = msg.twist.twist.linear.x
+
+    def callback_joy_vel(self, msg):
+        self.joy_vel = msg.angular.z
+        print(self.joy_vel)
+
     def loop(self):
-        if self.cv_image.size != 640 * 480 * 3:
-            return
-        if self.cv_left_image.size != 640 * 480 * 3:
-            return
-        if self.cv_right_image.size != 640 * 480 * 3:
-            return
+        # if self.cv_image.size != 640 * 480 * 3:
+        #     return
+        # if self.cv_left_image.size != 640 * 480 * 3:
+        #     return
+        # if self.cv_right_image.size != 640 * 480 * 3:
+        #     return
         if self.vel.linear.x != 0:
             self.is_started = True
         if self.is_started == False:
             return
-        img = resize(self.cv_image, (48, 64), mode='constant')
-        img_left = resize(self.cv_left_image, (48, 64), mode='constant')
-        img_right = resize(self.cv_right_image, (48, 64), mode='constant')
+        crooped_img = self.cv_image[156:, :]
+        crooped_left_img = self.cv_left_image[156:, :]
+        crooped_right_img = self.cv_right_image[156:, :]
+
+        img = resize(crooped_img, (200, 88), mode='constant')
+        img_left = resize(crooped_left_img, (200, 88), mode='constant')
+        img_right = resize(crooped_right_img, (200, 88), mode='constant')
 
         ros_time = str(rospy.Time.now())
 
         # if self.episode == 0:
-        #     self.learning = False
+            # self.learning = False
             # dataset = self.dl.load_dataset(self.load_image_path, self.load_dir_path, self.load_vel_path)
             # self.dl.load(self.load_path)            
             # print("load model",self.load_path)
@@ -176,7 +200,7 @@ class nav_cloning_node:
         #     self.vel.linear.x = 0.0
         #     self.vel.angular.z = 0.0
         #     self.nav_pub.publish(self.vel)
-        #     self.dl.off_trains() 
+            # self.dl.off_trains() 
         #     self.dl.save(self.save_path)
         #     self.learning = False
         #     x_cat, c_cat, t_cat = self.dl.call_dataset()
@@ -184,7 +208,7 @@ class nav_cloning_node:
         #     self.dl.save_tensor(c_cat, self.save_dir_path, '/dir.pt')
         #     self.dl.save_tensor(t_cat, self.save_vel_path, '/vel.pt')
    
-        if self.episode == self.episode_num + 10000:
+        if self.episode == self.episode_num + 5000:
             os.system('killall roslaunch')
             sys.exit()
 
@@ -197,20 +221,36 @@ class nav_cloning_node:
                 angle_error = abs(action - target_action)
                 loss = 0
 
-                if angle_error > 0.05:
+                # if angle_error > 0.05 and self.alpha > 0.05 and self.liner_odom > 0.05 and abs(self.joy_vel) == 0:
+                
+                if self.episode % 2 == 0 and angle_error > 0.05 and self.alpha > 0.05 and self.liner_odom > 0.05:
                     dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
-                    action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
-                    action = action * 1.5
+                    # action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
+                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
+                    # action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
+                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
+                    # action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
+                    if self.cmd_dir_data == (1, 0, 0):
+                        action = action * 1.5
                     action = max(min(action, 0.4), -0.4)
 
-                    if abs(target_action) < 0.1: #0.1
-                        dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
-                        action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
-                        dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
-                        action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
-                                
+                    # if abs(target_action) < 0.1: #0.1
+                    #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
+                    #     action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
+                    #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
+                    #     action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
+
+                # if abs(self.joy_vel) != 0:
+                #     target_action = self.joy_vel
+                #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
+                #     action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
+                #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
+                #     action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
+                #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
+                #     action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
+
                 else:
-                    loss = self.dl.trains(2)
+                    loss = self.dl.trains()
                     print("Online Training")
 
                 if self.loop_count_flag:
@@ -228,7 +268,7 @@ class nav_cloning_node:
                 else:
                     pass
                         
-                if distance >= 0.145 or angle_error > 0.4 or self.cmd_dir_data != (1, 0, 0):
+                if distance >= 0.145 or angle_error > 0.4:
                     self.select_dl = False
                 elif distance <= 0.1:
                     self.select_dl = True
@@ -242,7 +282,7 @@ class nav_cloning_node:
             with open(self.path + self.start_time + '/' + 'training.csv', 'a') as f:
                 writer = csv.writer(f, lineterminator='\n')
                 writer.writerow(line)
-            self.vel.linear.x = 0.2
+            self.vel.linear.x = 0.4
             self.vel.angular.z = target_action
             self.nav_pub.publish(self.vel)
 
@@ -262,7 +302,7 @@ class nav_cloning_node:
             with open(self.path + self.start_time + '/' + 'training.csv', 'a') as f:
                 writer = csv.writer(f, lineterminator='\n')
                 writer.writerow(line)
-            self.vel.linear.x = 0.2
+            self.vel.linear.x = 0.4
             self.vel.angular.z = target_action
             self.nav_pub.publish(self.vel)
 

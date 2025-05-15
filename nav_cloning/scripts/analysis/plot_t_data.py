@@ -5,11 +5,15 @@ import matplotlib.pyplot as plt
 # データセットのパスを設定
 mode = "selected_training"
 place = "cit3f"
+name = "real"
 
-image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(mode) + '/' + str(place) + '/' + 'route_8' + '/1/' +  '/image' + '/image.pt'
-dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(mode) + '/' + str(place) + '/' + 'route_8' + '/1/' + '/dir' + '/dir.pt'
-vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(mode) + '/' + str(place) + '/' + 'route_8' + '/1/' + '/vel' + '/vel.pt'
+# image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(mode) + '/' + str(place) + '/' + 'route_8' + '/1/' +  '/image' + '/image.pt'
+# dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(mode) + '/' + str(place) + '/' + 'route_8' + '/1/' + '/dir' + '/dir.pt'
+# vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset_with_dir_' + str(mode) + '/' + str(place) + '/' + 'route_8' + '/1/' + '/vel' + '/vel.pt'
 
+image_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/image/' + str(name) + '/image.pt'
+dir_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/dir/' + str(name) + '/dir.pt'
+vel_path = roslib.packages.get_pkg_dir('nav_cloning') + '/data/dataset/vel/' + str(name) + '/vel.pt'
 # データセットを読み込む関数
 def load_dataset(image_path, dir_path, vel_path):
     # データの読み込み

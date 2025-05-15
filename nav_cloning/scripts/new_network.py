@@ -12,7 +12,7 @@ import time
 # HYPERPARAMETERS
 BATCH_SIZE = 64
 BRANCH = 3
-EPOCH = 20
+EPOCH = 10
 PADDING_DATA = 3
 
 class Perception(nn.Module):
