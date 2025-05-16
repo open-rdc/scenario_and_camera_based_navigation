@@ -1,26 +1,5 @@
 # waypoint_nav
-This program enables you to execute waypoint navigation.
-Provide a path plan and target direction.
-## Feature
-- infinite loop
-- enroling functions in yaml
-
-## Usage
-### Build
-```
-$ mkdir -p ~/ws/src
-$ cd ~/ws/src
-$ git clone 
-$ cd ../
-$ catkin_make
-```
-
-### Run
-```
-$ source ~/ws/devel/setup.bash
-$ roslaunch wayopint_nav run.launch
-$ rosservice call /start_wp_nav "{}"
-```
+ウェイポイントに基づくナビゲーションを行いながら，データセットに通路の特徴の分類と目標方向を与えるパッケージ
 
 ## Settings
 ### ROS Param

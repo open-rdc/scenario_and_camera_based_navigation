@@ -16,7 +16,7 @@ Navigation software based on camera images and scenarios
 ### Step 1: Install required Python libraries and MeCab
 - PyTorch, CUDA-Toolkit 
 ```
-pip3 install torch torchvision torchaudio scikit-image tensorboard
+pip3 install torch torchvision torchaudio torcheval scikit-image tensorboard 
 ``` 
 
 - MeCab 
