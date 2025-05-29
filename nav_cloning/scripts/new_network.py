@@ -13,7 +13,7 @@ import time
 BATCH_SIZE = 64
 BRANCH = 3
 EPOCH = 10
-PADDING_DATA = 3
+PADDING_DATA = 1
 
 class Perception(nn.Module):
     def __init__(self):
@@ -86,31 +86,34 @@ class deep_learning:
         self.loss_all = 0.0
 
     def make_dataset(self, img, dir_cmd, target_angle):
-        x = torch.tensor(img, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).to(self.device)
-        c = torch.tensor(dir_cmd, dtype=torch.float32).unsqueeze(0).to(self.device)
-        t = torch.tensor([target_angle], dtype=torch.float32).unsqueeze(0).to(self.device)
+    # 常にCPUでテンソルを扱う（VRAM節約）
+        x = torch.tensor(img, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+        c = torch.tensor(dir_cmd, dtype=torch.float32).unsqueeze(0)
+        t = torch.tensor([target_angle], dtype=torch.float32).unsqueeze(0)
 
         if self.first_flag:
-            self.x_cat, self.c_cat, self.t_cat = x, c, t
+            self.x_list, self.c_list, self.t_list = [], [], []
             self.direction_counter[tuple(dir_cmd)] += 1
             self.first_flag = False
 
-        if dir_cmd == (0, 1, 0) or dir_cmd == (0, 0, 1):  
-            for i in range(PADDING_DATA):
-                self.x_cat = torch.cat([self.x_cat, x], dim=0)
-                self.c_cat = torch.cat([self.c_cat, c], dim=0)
-                self.t_cat = torch.cat([self.t_cat, t], dim=0)
-            print("Padding Data")
-            self.direction_counter[tuple(dir_cmd)] += 7
-        else:
-            self.x_cat = torch.cat([self.x_cat, x], dim=0)
-            self.c_cat = torch.cat([self.c_cat, c], dim=0)
-            self.t_cat = torch.cat([self.t_cat, t], dim=0)
-            self.direction_counter[tuple(dir_cmd)] += 1
+    # 左折・右折ならデータ拡張（padding）
+        pad_count = PADDING_DATA if tuple(dir_cmd) in [(0, 1, 0), (0, 0, 1)] else 1
+        for _ in range(pad_count):
+            self.x_list.append(x.clone())
+            self.c_list.append(c.clone())
+            self.t_list.append(t.clone())
 
-        dataset = TensorDataset(self.x_cat, self.c_cat, self.t_cat)
+        self.direction_counter[tuple(dir_cmd)] += pad_count
+
+    # テンソルに変換（全てCPU上）
+        x_cat = torch.cat(self.x_list, dim=0)
+        c_cat = torch.cat(self.c_list, dim=0)
+        t_cat = torch.cat(self.t_list, dim=0)
+
+        dataset = TensorDataset(x_cat, c_cat, t_cat)
         loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
         return dataset, len(dataset), loader
+
 
     def trains(self):
         if self.first_flag:

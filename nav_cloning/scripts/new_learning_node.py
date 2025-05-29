@@ -217,22 +217,25 @@ class nav_cloning_node:
             distance = self.min_distance
             
             if self.mode == "selected_training":
-                action = self.dl.act(img, self.cmd_dir_data)
-                angle_error = abs(action - target_action)
+                # action = self.dl.act(img, self.cmd_dir_data)
+                # angle_error = abs(action - target_action)
                 loss = 0
-
-                # if angle_error > 0.05 and self.alpha > 0.05 and self.liner_odom > 0.05 and abs(self.joy_vel) == 0:
-                
-                if self.episode % 2 == 0 and angle_error > 0.05 and self.alpha > 0.05 and self.liner_odom > 0.05:
-                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
+                dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
                     # action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
-                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
+                dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
                     # action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
-                    dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
-                    # action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
-                    if self.cmd_dir_data == (1, 0, 0):
-                        action = action * 1.5
-                    action = max(min(action, 0.4), -0.4)
+                dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
+                
+                # if self.episode % 2 == 0 and angle_error > 0.05 and self.alpha > 0.05 and self.liner_odom > 0.05:
+                #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
+                #     # action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
+                #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
+                #     # action_left,  loss_left  = self.dl.act_and_trains(img_left, self.cmd_dir_data, train_dataset)
+                #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
+                #     # action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
+                #     if self.cmd_dir_data == (1, 0, 0):
+                #         action = action * 1.5
+                #     action = max(min(action, 0.4), -0.4)
 
                     # if abs(target_action) < 0.1: #0.1
                     #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_left,self.cmd_dir_data,target_action-0.2)
@@ -249,39 +252,39 @@ class nav_cloning_node:
                 #     dataset , dataset_num, train_dataset = self.dl.make_dataset(img_right,self.cmd_dir_data,target_action+0.2)
                 #     action_right, loss_right = self.dl.act_and_trains(img_right, self.cmd_dir_data, train_dataset)
 
-                else:
-                    loss = self.dl.trains()
-                    print("Online Training")
+                # else:
+                    # loss = self.dl.trains()
+                    # print("Online Training")
 
                 if self.loop_count_flag:
                     print("loop count")
                     self.vel.linear.x = 0.0
                     self.vel.angular.z = 0.0
                     self.nav_pub.publish(self.vel)
-                    x_cat, c_cat, t_cat = self.dl.call_dataset()
-                    self.dl.save_tensor(x_cat, self.save_image_path, '/image.pt')
-                    self.dl.save_tensor(c_cat, self.save_dir_path, '/dir.pt')
-                    self.dl.save_tensor(t_cat, self.save_vel_path, '/vel.pt')
+                    # x_cat, c_cat, t_cat = self.dl.call_dataset()
+                    # self.dl.save_tensor(x_cat, self.save_image_path, '/image.pt')
+                    # self.dl.save_tensor(c_cat, self.save_dir_path, '/dir.pt')
+                    # self.dl.save_tensor(t_cat, self.save_vel_path, '/vel.pt')
                     self.dl.off_trains()
-                    self.dl.save(self.save_path)
+                    # self.dl.save(self.save_path)
                     self.learning = False               
                 else:
                     pass
                         
-                if distance >= 0.145 or angle_error > 0.4:
-                    self.select_dl = False
-                elif distance <= 0.1:
-                    self.select_dl = True
-                if self.select_dl and self.episode >= 0:
-                    target_action = action
+                # if distance >= 0.145 or angle_error > 0.4:
+                #     self.select_dl = False
+                # elif distance <= 0.1:
+                #     self.select_dl = True
+                # if self.select_dl and self.episode >= 0:
+                #     target_action = action
 
             # end mode
-            print(str(self.episode) + ", training, loss: " + str(loss) + ", angle_error: " + str(angle_error) + ", distance: " + str(distance) + ", self.cmd_dir_data: " + str(self.cmd_dir_data))
+            # print(str(self.episode) + ", training, loss: " + str(loss) + ", angle_error: " + str(angle_error) + ", distance: " + str(distance) + ", self.cmd_dir_data: " + str(self.cmd_dir_data))
             self.episode += 1
-            line = [str(self.episode), "training", str(loss), str(angle_error), str(distance), str(self.pos_x), str(self.pos_y), str(self.pos_the), str(self.cmd_dir_data)]
-            with open(self.path + self.start_time + '/' + 'training.csv', 'a') as f:
-                writer = csv.writer(f, lineterminator='\n')
-                writer.writerow(line)
+            # line = [str(self.episode), "training", str(loss), str(angle_error), str(distance), str(self.pos_x), str(self.pos_y), str(self.pos_the), str(self.cmd_dir_data)]
+            # with open(self.path + self.start_time + '/' + 'training.csv', 'a') as f:
+            #     writer = csv.writer(f, lineterminator='\n')
+            #     writer.writerow(line)
             self.vel.linear.x = 0.4
             self.vel.angular.z = target_action
             self.nav_pub.publish(self.vel)
@@ -297,11 +300,11 @@ class nav_cloning_node:
             print(str(self.episode) + ", test, angular:" + str(target_action) + ", distance: " + str(distance) + ", self.cmd_dir_data: " + str(self.cmd_dir_data))
 
             self.episode += 1
-            angle_error = abs(self.action - target_action)
-            line = [str(self.episode), "test", "0", str(angle_error), str(distance), str(self.pos_x), str(self.pos_y), str(self.pos_the), str(self.cmd_dir_data)]
-            with open(self.path + self.start_time + '/' + 'training.csv', 'a') as f:
-                writer = csv.writer(f, lineterminator='\n')
-                writer.writerow(line)
+            # angle_error = abs(self.action - target_action)
+            # line = [str(self.episode), "test", "0", str(angle_error), str(distance), str(self.pos_x), str(self.pos_y), str(self.pos_the), str(self.cmd_dir_data)]
+            # with open(self.path + self.start_time + '/' + 'training.csv', 'a') as f:
+            #     writer = csv.writer(f, lineterminator='\n')
+                # writer.writerow(line)
             self.vel.linear.x = 0.4
             self.vel.angular.z = target_action
             self.nav_pub.publish(self.vel)
