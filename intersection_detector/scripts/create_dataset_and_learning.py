@@ -52,8 +52,8 @@ class intersection_detector_node:
         self.learning_tensor_flag = False
         self.select_dl = False
         self.start_time = time.strftime("%Y%m%d_%H:%M:%S")
-        self.save_image_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/dataset/image/'
-        self.save_label_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/dataset/label/'
+        self.save_image_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/dataset/' + str(self.start_time) + '/image/'
+        self.save_label_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/dataset/' + str(self.start_time) + '/label/'
         self.save_path = roslib.packages.get_pkg_dir('intersection_detector') + '/data/model/'
         
         self.previous_reset_time = 0
@@ -101,9 +101,9 @@ class intersection_detector_node:
         image_tensor ,label_tensor =self.dl.make_dataset(img,self.cmd_dir_data)
 
         if self.loop_count_flag:
-            self.dl.save_tensor(image_tensor,self.save_image_path,'/image.pt')
-            self.dl.save_tensor(label_tensor,self.save_label_path, '/label.pt')
-            _,_ = self.dl.cat_training(image_tensor, label_tensor, False)
+            self.dl.save_tensor(image_tensor, self.save_image_path, '/image.pt')
+            self.dl.save_tensor(label_tensor, self.save_label_path, '/label.pt')
+            _, _ = self.dl.training(image_tensor, label_tensor, False)
             self.dl.save(self.save_path)
             self.loop_count_flag = False
             print("Finish learning")

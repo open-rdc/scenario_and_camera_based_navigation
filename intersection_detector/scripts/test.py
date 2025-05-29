@@ -7,10 +7,6 @@ import rospy
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-# from intersection_detect_mobilenetv2 import *
-# from intersection_detect_LRCN import *
-# from intersection_detect_LRCN_no_buffer import *
-# from intersection_detect_LRCN_all import *
 from network import *
 from skimage.transform import resize
 from geometry_msgs.msg import Twist
@@ -18,9 +14,7 @@ from geometry_msgs.msg import PoseArray
 from std_msgs.msg import Int8,String
 from std_srvs.srv import Trigger
 from std_msgs.msg import Int8MultiArray
-# from waypoint_nav.msg import cmd_dir_intersection
 from scenario_navigation_msgs.msg import cmd_dir_intersection
-# from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_srvs.srv import Empty
 from std_srvs.srv import SetBool, SetBoolResponse
 import os
@@ -36,7 +30,6 @@ class intersection_detector_node:
         self.bridge = CvBridge()
         self.intersection_pub = rospy.Publisher("passage_type",cmd_dir_intersection,queue_size=1)
         self.image_sub = rospy.Subscriber("/camera_center/image_raw", Image, self.callback)
-        # self.image_sub = rospy.Subscriber("/image_center", Image, self.callback)
         self.srv = rospy.Service('/training_intersection', SetBool, self.callback_dl_training)
         self.loop_srv = rospy.Service('/loop_count', SetBool, self.callback_dl_training)
         
@@ -104,18 +97,16 @@ class intersection_detector_node:
         ros_time = str(rospy.Time.now())
 
         if self.episode == 0:
-            # self.learning = False
             self.dl.load(self.load_path)
             print("load model: ",self.load_path)
         
         intersection = self.dl.test(img)
-        intersection_name = self.intersection_list[intersection]
         self.intersection.intersection_name = self.intersection_list[intersection]
         print(self.intersection.intersection_name)
         self.intersection_pub.publish(self.intersection)
         print("test" + str(self.episode) +", intersection_name: " + str(self.intersection.intersection_name))
 
-        self.episode +=1
+        self.episode += 1
 
 if __name__ == '__main__':
     rg = intersection_detector_node()
