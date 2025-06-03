@@ -32,8 +32,7 @@ class nav_cloning_node:
     def __init__(self):
         rospy.init_node('nav_cloning_node', anonymous=True)
         self.mode = rospy.get_param("/nav_cloning_node/mode", "selected_training")
-        self.action_num = 1
-        self.dl = deep_learning(n_action = self.action_num)
+        self.dl = deep_learning()
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber("/camera_center/image_raw", Image, self.callback)
         self.image_left_sub = rospy.Subscriber("/camera_left/image_raw", Image, self.callback_left_camera)
@@ -44,7 +43,7 @@ class nav_cloning_node:
         self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
         self.loop_count_srv = rospy.Service('loop_count',SetBool,self.loop_count_callback)
         self.mode_save_srv = rospy.Service('/model_save', Trigger, self.callback_model_save)
-        self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
+        self.pose_sub = rospy.Subscriber("/mcl_pose", PoseWithCovarianceStamped, self.callback_pose)
         self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path) 
         self.cmd_dir_sub = rospy.Subscriber("/cmd_dir_intersection", cmd_dir_intersection, self.callback_cmd,queue_size=1)
         self.min_distance = 0.0
@@ -198,7 +197,7 @@ class nav_cloning_node:
                 angle_error = abs(action - target_action)
                 loss = 0
 
-                if angle_error > 0.05:
+                if angle_error > 0.05 and abs(self.action) <= 0.7:
                     dataset , dataset_num, train_dataset = self.dl.make_dataset(img, self.cmd_dir_data, target_action)
                     action, loss = self.dl.act_and_trains(img, self.cmd_dir_data, train_dataset)
                     action = action * 1.5
@@ -229,7 +228,7 @@ class nav_cloning_node:
                 else:
                     pass
                         
-                if distance >= 0.145 or angle_error > 0.4:
+                if distance >= 0.145 or angle_error > 0.4 or self.cmd_dir_data != (1, 0, 0):
                     self.select_dl = False
                 elif distance <= 0.1:
                     self.select_dl = True
