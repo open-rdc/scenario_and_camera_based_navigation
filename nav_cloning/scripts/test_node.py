@@ -32,8 +32,7 @@ class nav_cloning_node:
     def __init__(self):
         rospy.init_node('nav_cloning_node', anonymous=True)
         self.mode = rospy.get_param("/nav_cloning_node/mode", "selected_training")
-        self.action_num = 1
-        self.dl = deep_learning(n_action = self.action_num)
+        self.dl = deep_learning()
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber("/camera_center/image_raw", Image, self.callback)
         self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)

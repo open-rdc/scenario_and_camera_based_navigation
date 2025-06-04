@@ -2,9 +2,9 @@
   <node name="cmd_dir_executor" pkg="scenario_navigation" type="cmd_dir_executor_detailed" output="screen" />
   <node name="scenario_parser" pkg="scenario_navigation" type="scenario_parser_jsk.py" output="screen" >
     <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario01.txt" /> -->
-    <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario05.txt" /> -->
+    <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario05.txt" />
     <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario20.txt" /> -->
-    <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario21.txt" />
+    <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario21.txt" /> -->
     <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario22.txt" /> -->
     <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario24.txt" /> -->
     <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario50.txt" /> -->
