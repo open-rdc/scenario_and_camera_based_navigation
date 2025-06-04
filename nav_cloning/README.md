@@ -2,7 +2,7 @@
 深層学習により，カメラ画像と目標方向から，ロボットの角速度を出力するパッケージ
 
 ## ネットワーク
-<img src="network.png">
+<img src="../data/source/nav_cloning/network.png">
 
 - **入力**
   - カメラ画像: 64×48

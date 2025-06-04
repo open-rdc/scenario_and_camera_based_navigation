@@ -2,7 +2,7 @@
 
 Navigation software based on camera images and scenarios
 
-<!-- <img src="system.png"> -->
+<img src="data/source/system.png">
 
 ## Dependencies 
 - ubuntu 20.04 LTS
@@ -81,7 +81,7 @@ cd catkin_ws/src/scenario_and_camera_based_navigation/experiments
 <launch>
   <node name="cmd_dir_executor" pkg="scenario_navigation" type="cmd_dir_executor_detailed" output="screen" />
   <node name="scenario_parser" pkg="scenario_navigation" type="scenario_parser_jsk.py" output="screen" >
-    <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario01.txt" />
+    <!-- <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/scenario01.txt" /> -->
     # if you write scenario, change under value to your file name
     <param name="scenario_path" value="$(find scenario_navigation)/config/Scenarios/hoge.txt" />
   </node>
@@ -96,7 +96,10 @@ cd ~/catkin_ws/src/scenario_and_camera_based_navigation/experiments/test
 ./intersecton_detector.sh
 ./nav_cloning.sh
 ```
-5. Launch scenario-based navigation
+5. Move the robot you want to start in Gazebo 
+
+6. Launch scenario-based navigation
 ```
 ./scenario_navigation.sh
 ```
+## Citation
