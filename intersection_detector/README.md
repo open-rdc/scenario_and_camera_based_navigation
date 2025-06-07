@@ -15,6 +15,17 @@ MobileNetV3-Large + lstm + fc
 6. 3_way_center
 7. 3_way_left  
 
+## Subscribed Topics
+| Name                       | Type                                                                                         | Description                              |
+| -------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `/camera_center/image_raw` | [`sensor_msgs/Image`](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Image.html)     | center camera image                      |
+| `/clock`                   | [`rosgraph_msgs/Clock`](http://docs.ros.org/en/noetic/api/rosgraph_msgs/html/msg/Clock.html) | simulation clock                         |
+| `/cmd_dir_intersection`    | `scenario_navigation_msgs/cmd_dir_intersection` *(custom message)*                           | intersection command input ※learning only|
+
+## Published Topics
+| Name            | Type                                                                                     | Description                         |
+| --------------- | ---------------------------------------------------------------------------------------- | ----------------------------------- |
+| `/passage_type` | `scenario_navigation_msgs/cmd_dir_intersection` *(custom message)*                       | predicted passage/intersection type |
 
 ## パッケージの構成
 ```

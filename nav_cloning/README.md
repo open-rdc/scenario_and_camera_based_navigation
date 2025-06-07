@@ -11,6 +11,27 @@
 - **出力**
   - ロボットの角速度: rad/s
 
+## Subscribed Topics
+| Name        | Type                                    | Description                       | 
+| :---------- | :-------------------------------------- | :-------------------------------- | 
+| `/amcl_pose`                | [`geometry_msgs/PoseWithCovarianceStamped`](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseWithCovarianceStamped.html) | robot's current estimated pose           |
+| `/camera_center/image_raw` | [`sensor_msgs/Image`](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Imagehtml)                                             | center camera image                      |
+| `/camera_left/image_raw`   | [`sensor_msgs/Image`](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Image.html)                                             | left camera image                        |
+| `/camera_right/image_raw`  | [`sensor_msgs/Image`](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Image.html)                                             | right camera image                       |
+| `/clock`                   | [`rosgraph_msgs/Clock`](http://docs.ros.org/en/noetic/api/rosgraph_msgs/html/msg/Clock.html)                                         | simulation clock                         |
+| `/cmd_dir_intersection`    | `scenario_navigation_msgs/cmd_dir_intersection` *(custom message)*                                                                   | direction and intersection command input |
+| `/move_base/NavfnROS/plan` | [`nav_msgs/Path`](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html)                                                     | global planned path                      |
+| `/nav_vel`                 | [`geometry_msgs/Twist`](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html)                                         | velocity command from navigation stack   |
+| `/tracker`                 | [`nav_msgs/Odometry`](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html)                                             | current odometry from tracker            |
+※ Subscribed to `/camera_center` and `/cmd_dir_intersection` during the test.
+
+## Published Topics
+
+| Name       | Type                                                                                         | Description                           |
+| ---------- | -------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `/cmd_vel` | [`geometry_msgs/Twist`](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html) | velocity command output to the robot  |
+
+ 
 ## 構成
 ```
 ├── CMakeLists.txt

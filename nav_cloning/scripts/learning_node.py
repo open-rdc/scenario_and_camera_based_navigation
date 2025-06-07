@@ -38,12 +38,11 @@ class nav_cloning_node:
         self.image_left_sub = rospy.Subscriber("/camera_left/image_raw", Image, self.callback_left_camera)
         self.image_right_sub = rospy.Subscriber("/camera_right/image_raw", Image, self.callback_right_camera)
         self.vel_sub = rospy.Subscriber("/nav_vel", Twist, self.callback_vel)
-        self.action_pub = rospy.Publisher("action", Int8, queue_size=1)
         self.nav_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.srv = rospy.Service('/training', SetBool, self.callback_dl_training)
         self.loop_count_srv = rospy.Service('loop_count',SetBool,self.loop_count_callback)
         self.mode_save_srv = rospy.Service('/model_save', Trigger, self.callback_model_save)
-        self.pose_sub = rospy.Subscriber("/mcl_pose", PoseWithCovarianceStamped, self.callback_pose)
+        self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.callback_pose)
         self.path_sub = rospy.Subscriber("/move_base/NavfnROS/plan", Path, self.callback_path) 
         self.cmd_dir_sub = rospy.Subscriber("/cmd_dir_intersection", cmd_dir_intersection, self.callback_cmd,queue_size=1)
         self.min_distance = 0.0
