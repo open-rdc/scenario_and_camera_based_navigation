@@ -4,7 +4,8 @@ Navigation software based on camera images and scenarios
 
 <img src="data/source/system.png">
 
-[![](http://img.youtube.com/vi/TRf29iPAUFY/default.jpg)](https://www.youtube.com/watch?v=TRf29iPAUFY)
+## Video
+[![](http://img.youtube.com/vi/TRf29iPAUFY/maxresdefault.jpg)](https://www.youtube.com/watch?v=TRf29iPAUFY)
 
 ## Dependencies 
 - ubuntu 20.04 LTS
@@ -104,4 +105,4 @@ cd ~/catkin_ws/src/scenario_and_camera_based_navigation/experiments/test
 ```
 ./scenario_navigation.sh
 ```
-## Citation
+<!-- ## Citation -->
